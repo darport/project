@@ -1,8 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "gurobi_c.h"
-
 #include "Game.h"
 
-void updateSolved(Game *game,int *sol){
+void updateSolved(Game *game, double *sol){
     int i,j,k, size = game->size;
     for(i = 0; i<size; i++){
         for(j = 0; j<size; j++){
@@ -15,7 +16,7 @@ void updateSolved(Game *game,int *sol){
     }
 }
 
-void freeILP(int *sol, int *ind, int *val, int *obj, int *vtype, GRBenv *env, GRBmodel *model){
+void freeILP(double *sol, int *ind, double *val,double *obj, char *vtype, GRBmodel *model, GRBenv *env){
     free(sol);
     free(ind);
     free(val);
@@ -24,21 +25,20 @@ void freeILP(int *sol, int *ind, int *val, int *obj, int *vtype, GRBenv *env, GR
     GRBfreemodel(model);
     GRBfreeenv(env);
 }
+
 int ILP(Game *game){
     int size = game->size, flag = 0;
     GRBenv   *env   = NULL;
     GRBmodel *model = NULL;
-    double *sol = (double *)malloc(size*size*size, sizeof(double));
-    int    *ind = (int *)malloc(size, sizeof(int));
-    double *val = (double *)malloc(size, sizeof(double));
-    double *obj = (double *)malloc(size*size*size, sizeof(double));
-    char   *vtype = (double *)malloc(size*size*size, sizeof(double));
+    double *sol = (double *)malloc(size * size * size * sizeof(double));
+    int    *ind = (int *)malloc(size * sizeof(int));
+    double *val = (double *)malloc(size *  sizeof(double));
+    double *obj = (double *)malloc(size* size * size * sizeof(double));
+    char   *vtype = (char *)malloc(size * size * size * sizeof(double));
     int       optimstatus;
     double    objval;
 
     int error = 0, i, j, k, l, temp, cols = game->rowsInBlock, rows = game->colsInBlock;
-
-
 
     /* Create environment - log file is sudoku.log */
     error = GRBloadenv(&env, "sudoku.log");
@@ -54,7 +54,6 @@ int ILP(Game *game){
 
     GRBsetintparam(env,GRB_INT_PAR_LOGTOCONSOLE,0);
 
-
     /* Create an empty model named "sudoku" */
     error = GRBnewmodel(env, &model, "sudoku", 0, NULL, NULL, NULL, NULL, NULL);
     if (error) {
@@ -67,20 +66,16 @@ int ILP(Game *game){
         GRBfreeenv(env);
         return 1;
     }
-
     for(i = 0; i<size*size*size; i++){
         /*no obj init*/
         vtype[i] = GRB_BINARY;
     }
-
     error = GRBaddvars(model, size*size*size, 0, NULL, NULL, NULL, obj, NULL, NULL, vtype, NULL);
-
     if (error) {
         printf("ERROR %d GRBaddvars(): %s\n", error, GRBgeterrormsg(env));
         freeILP(sol,ind,val,obj,vtype, model, env);
         return -1;
     }
-
     error = GRBupdatemodel(model);
     if (error) {
         printf("ERROR %d GRBupdatemodel(): %s\n", error, GRBgeterrormsg(env));
@@ -103,6 +98,7 @@ int ILP(Game *game){
             }
         }
     }
+
     /* constrain that if value != 0 don't change it*/
     for(i = 0; i<size; i++){
         for(j = 0; j<size; j++){
@@ -123,6 +119,7 @@ int ILP(Game *game){
             }
         }
     }
+
     /* row constrains */
     for(i =0; i<size; i++){
         for(k=0; k<size; k++){
@@ -138,6 +135,7 @@ int ILP(Game *game){
             }
         }
     }
+
     /* col constrains */
     for(j = 0; j<size; j++){
         for(k=0; j<size; j++){
@@ -153,6 +151,7 @@ int ILP(Game *game){
             }
         }
     }
+
     /*block constrains - creating block grid*/
     for(i = 0; i<rows; i++){
         for(j = 0; j<cols; j++){
@@ -173,8 +172,6 @@ int ILP(Game *game){
         }
     }
 
-
-
     /* Optimize model - need to call this before calculation */
     error = GRBoptimize(model);
     if (error) {
@@ -192,7 +189,6 @@ int ILP(Game *game){
     }
 
     /* Get solution information */
-
     error = GRBgetintattr(model, GRB_INT_ATTR_STATUS, &optimstatus);
     if (error) {
         printf("ERROR %d GRBgetintattr(): %s\n", error, GRBgeterrormsg(env));
@@ -209,7 +205,6 @@ int ILP(Game *game){
     }
 
     /* get the solution - the assignment to each variable */
-
     error = GRBgetdblattrarray(model, GRB_DBL_ATTR_X, 0, size*size*size, sol);
     if (error) {
         printf("ERROR %d GRBgetdblattrarray(): %s\n", error, GRBgeterrormsg(env));
@@ -219,11 +214,10 @@ int ILP(Game *game){
 
     /* if there is a solution, update the board */
     if(optimstatus == GRB_OPTIMAL){
-        updateBoard();
+        updateSolved(game, sol);
         flag = 1;
     }
 
     freeILP(sol,ind,val,obj,vtype, model, env);
-
     return flag;
 }

@@ -10,11 +10,11 @@ void freeList(Node *head){
     }
 }
 
-void addNode(Node *tail, int x, int y, int currZ, int prevZ){
+void addNode(Node **tail, int x, int y, int currZ, int prevZ){
     Node *newNode = (Node *) malloc(sizeof(Node));
     if(newNode == NULL){
         memoryError();
-    }
+    } /* newNode is not null */
     newNode->x = x;
     newNode->y = y;
     newNode->currZ = currZ;

@@ -1,5 +1,7 @@
-#include "Game.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "Game.h"
+#include "MainAux.h"
 
 int printBoard(Game *game){
     int sepLen = 4*game->size + game->rowsInBlock + 1, i, j, val;
@@ -57,6 +59,7 @@ int main(){
     Cell **board;
     int i,j,size;
 
+    game = (Game *)malloc(sizeof(game));
     game->rowsInBlock = 4;
     game->colsInBlock = 5;
     game->size = 20;
@@ -80,6 +83,6 @@ int main(){
 
     game->board = board;
     printBoard(game);
-    freeBoard(game);
+    freeGame(game);
     return 1;
 }

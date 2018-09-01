@@ -1,20 +1,6 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include "Game.h"
-
-void updateErroneous(Game *game){
-	int i,j,value, size=game->size;
-	for(i=0; i<size; i++){
-		for(j=0; j<size; j++){
-			value = game->board[i][j].value;
-			if(value == 0 || isValid(game,i,j,value,0)){
-				game->board[i][j].marked = 0;
-			}
-			else{
-				game->board[i][j].marked = 1;
-			}
-		}
-	}
-}
 
 void cleanBoard(Game * game){
 	int i, j;
@@ -57,7 +43,7 @@ int erroneous(){
 int isErroneous(Game *game){
 	int i,j;
 	for(i=0; i<game->size; i++){
-		for(int j=0; j<game->size; j++){
+		for(j=0; j<game->size; j++){
 			if(game->board[i][j].marked){
 				return 1; /* there is an erroneous value in the board */
 			}
@@ -66,7 +52,7 @@ int isErroneous(Game *game){
 	return 0;
 }
 
-int validR(int option, int row,int col, Game *game, int markErroneus){
+int validR(Game *game, int row, int col, int option, int markErroneous){
 	int j;
 	for(j = 0; j<game->size; j++){
 		if(game->board[row][j].value == option){
@@ -74,7 +60,7 @@ int validR(int option, int row,int col, Game *game, int markErroneus){
 				continue;
 			}
 			/* if the option exists in the row, it is not valid */
-			if(markErroneus && !game->board[row][j].fixed){
+			if(markErroneous && !game->board[row][j].fixed){
 				game->board[row][j].marked = 1;
 			}
 			return 0;
@@ -83,7 +69,7 @@ int validR(int option, int row,int col, Game *game, int markErroneus){
 	return 1;
 }
 
-int validC(int option,int row, int col, Game *game, int markErroneous){
+int validC(Game *game, int row, int col, int option, int markErroneous) {
 	int i;
 	for(i = 0; i<game->size; i++){
 		if(game->board[i][col].value == option){
@@ -100,7 +86,7 @@ int validC(int option,int row, int col, Game *game, int markErroneous){
 	return 1;
 }
 
-int validB(int option, int row, int col, Game *game, int markErroneous){
+int validB(Game *game, int row, int col, int option, int markErroneous){
 	int startRow = (row/game->rowsInBlock)*game->rowsInBlock;
 	int startCol = (col/game->colsInBlock)*game->colsInBlock;
 	int endRow = startRow + game->rowsInBlock;
@@ -122,15 +108,30 @@ int validB(int option, int row, int col, Game *game, int markErroneous){
 	}
 	return 1;
 }
-int isValid(Game *game, int i, int j, int op, int markErroneous){
-	return (validR(op,i,j,game,markErroneous) && validC(op,i,j,game,markErroneous)
-			&& validB(op,i,j,game,markErroneous));
+int isValid(Game *game, int row, int col, int option, int markErroneous){
+	return (validR(game, row, col, option, markErroneous) && validC(game, row, col, option, markErroneous)
+			&& validB (game, row, col, option, markErroneous));
+}
+
+void updateErroneous(Game *game){
+	int i,j,value, size=game->size;
+	for(i=0; i<size; i++){
+		for(j=0; j<size; j++){
+			value = game->board[i][j].value;
+			if(value == 0 || isValid(game,i,j,value,0)){
+				game->board[i][j].marked = 0;
+			}
+			else{
+				game->board[i][j].marked = 1;
+			}
+		}
+	}
 }
 
 int options(Game *game ,int i, int j){
-	int op, count = 0, valToChange;
+	int op, count = 0, valToChange = 0;
 	for(op = 1; op<=game->size; op++){
-		if(isValid(game,i,j,op)){
+		if(isValid(game,i,j,op,0)){
 			count++;
 			if(count > 1){
 				return 0;
@@ -138,10 +139,8 @@ int options(Game *game ,int i, int j){
 			valToChange = op;
 		}
 	}
-	if(count == 1){
-		return valToChange;
-	}
-	return 0;
+    /* if count == 1, valToChange !=0 and if count == 0 valToChange = 0. if count > 1, 0 was returned inside the loop */
+    return valToChange;
 }
 
 void markChanges(Game *game){
@@ -164,7 +163,7 @@ void markChanges(Game *game){
 }
 
 void setChanges(Game *game){
-	int i,j, singleOp;
+	int i,j;
 	for(i=0 ; i < game->size; i++){
 		for(j=0; j < game->size; j++){
 			if(game->board[i][j].needChange){

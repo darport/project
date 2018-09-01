@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include "Game.h"
+#include "Solver.h"
 #include "mainAux.h"
 #include "ILPSolver.h"
 
@@ -71,7 +71,7 @@ int openFile(Game *game, char *fileName){ /*instead of initializing cell** and t
 
     for(i = 0; i<game->size; i++){
         for(j = 0; j<game->size; j++){
-            fsacnf(fp,"%s",data);
+            fscanf(fp,"%s",data);
             setData(game,data,i,j);
         }
     }
@@ -204,13 +204,13 @@ int set(Game *game, int x, int y, int z){
     }
     /* clearing any move beyond the current move from the undo-redo list */
     temp = game->ops->next;
-    addNode(&(game->ops), x, y, z, game->board[x][y].value);
+    addNode(&game->ops, x, y, z, game->board[x][y].value);
     if(temp != NULL){
         freeList(temp);
     }
     /* if the value z is erroneous, mark will be 1 and all the non fixed cells that b
      * become erroneous because of z will be marked by isValid */
-    mark = !isValid(z,x,y,game,1);
+    mark = !isValid(game,x,y,z,1);
     game->board[x][y].value = z;
     game->board[x][y].marked = mark;
     /* updating erroneous cells and printing the board */
@@ -258,7 +258,7 @@ int existValue(Game *game, int row, int col){
     return 0;
 }
 
-int generateHelp(Game *game,int x,int y){
+int generateHelp(Game *game, int x){
     int i,row,col, z;
     /* generating puzzle with randomly filling x cells with legal values */
     for(i = 0; i<x; i++){
@@ -287,7 +287,7 @@ int generate(Game *game, int x, int y){
     int i, row, col;
     cleanBoard(game); /* check */
     for(i = 0; i<1000; i++){
-        if(generateHelp(game,x,y)){
+        if(generateHelp(game,x)){
             break;
         }
         cleanBoard(game);
@@ -316,7 +316,6 @@ int generate(Game *game, int x, int y){
             }
         }
     }
-
     return 1;
 }
 
@@ -338,7 +337,7 @@ int undo(Game *game, int show){
         else if(curr == 0 && z!= 0){
             printf("Undo %d,%d: from _to %d\n", x, y,z);
         }
-        else if(curr!=0 && z == 0){
+        else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
             printf("Undo %d,%d: from %d to _\n", x, y,curr);
 
         }
@@ -366,7 +365,7 @@ int redo(Game *game){
         else if(prev == 0 && z!= 0){
             printf("Redo %d,%d: from _to %d\n", x, y,z);
         }
-        else if(prev != 0 && z == 0){
+        else if(prev != 0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
             printf("Redo %d,%d: from %d to _\n", x, y,prev);
         }
         /*else both 0 check */
@@ -375,6 +374,7 @@ int redo(Game *game){
     printf("Error: no moves to redo\n");
     return 0;
 }
+
 int saveToFile(Game *game,char *fileName){
     FILE *fp = fopen(fileName, "w");
     int i,j;
@@ -417,14 +417,13 @@ int save(Game *game, char *fileName){
     }
     return saveToFile(game,fileName);
 }
+
 int hint(Game *game, int x, int y){
 
 }
 
-
 int numSolutions(Game *game){
-    int numSol, check;
-
+    int numSol;
     if(isErroneous(game)){
         return erroneous();
     }
@@ -440,7 +439,6 @@ int numSolutions(Game *game){
 }
 
 int autofill(Game *game){
-    int i,j;
     if(isErroneous(game)){
         return erroneous();
     }

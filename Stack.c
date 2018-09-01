@@ -1,17 +1,19 @@
-#include "mainAux.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "mainAux.h"
+#include "Stack.h"
 
-void push(int val, Stack stk){
+void push(Stack *stk, int val){
 	Elem *p;
-	p = (Elem *) malloc(sizeof(Elem));
+	p = (Elem *)malloc(sizeof(Elem));
 	if(p == NULL){
 		memoryError();
 		return;
 	}
 	p->val = val;
-	p->next = stk.top;
-	stk.top = p;
-	stk.size++;
+	p->next = stk->top;
+	stk->top = p;
+	stk->size++;
 }
 
 int pop(Stack *stk){
@@ -32,4 +34,8 @@ int top(Stack *stk){
 void initialize(Stack *stk){
 	stk->size = 0;
 	stk->top = NULL;
+}
+
+void freeStk(Stack *stk){
+
 }

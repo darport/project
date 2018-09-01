@@ -1,8 +1,10 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "Game.h"
 #include "Stack.h"
 #include "mainAux.h"
 
-void updateIndexForward(int *row, int *col, Game*game){
+void updateIndexForward(int *row, int *col, Game *game){
     if(*col < game->size-1){
         *col = *col + 1;
     }
@@ -12,7 +14,7 @@ void updateIndexForward(int *row, int *col, Game*game){
     }
 }
 
-void updateIndexBack(int *row, int *col, Game*game){
+void updateIndexBack(int *row, int *col, Game *game){
     if(*col > 0){
         *col = *col - 1;
     }
@@ -52,7 +54,7 @@ int ** copyBoard(Cell ** board, int size){
     return copy;
 }
 
-void freeBoardInt(int **board, size){
+void freeBoardInt(int **board, int size){
     int i;
     for(i = 0; i<size; i++){
         free(board[i]);
@@ -60,7 +62,7 @@ void freeBoardInt(int **board, size){
     free(board);
 }
 
-void copyBack(Game *game, int ** copy){
+void copyBack(Game *game, int ** copy, int size){
     int i,j;
     for(i = 0; i<size; i++){
         for(j = 0; j<size; j++){
@@ -75,7 +77,7 @@ int eBacktracking(Game *game){
     int **copy;
     copy = copyBoard(game->board, game->size);
     initialize(stk);
-    while(!(row == -1 && col = game->size -1)){
+    while(!(row == -1 && col == game->size -1)){
         if(row == game->size){
             counter++;
             row--; /* back to the right bottom */
@@ -94,17 +96,17 @@ int eBacktracking(Game *game){
         }
         else{ /*else going forward with the matrix*/
             if(game->board[row][col].value != 0){
-                push(0,stk);
+                push(stk,0);
                 updateIndexForward(&row,&col,game);
             }
             else{ /* the cell is 0 */
-                push(1,stk);
-                updateValue(game, &row, &col, &stk);
+                push(stk,1);
+                updateValue(game, &row, &col,stk);
             }
         }
     }
-    void copyBack(game,copy);
-    freeBoardInt(copy);
+    copyBack(game, copy, game->size);
+    freeBoardInt(copy, game->size);
     freeStk(stk);
     return counter;
 }

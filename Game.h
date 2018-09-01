@@ -3,7 +3,6 @@
 #ifndef GAME_H_
 #define GAME_H_
 
-
 typedef struct cell_t{
 	int value;
 	int fixed;
@@ -24,16 +23,23 @@ typedef struct game_t{
 } Game;
 
 
-
+int isFull(Game *game);
+void setData(Game *game, char *data, int i, int j);
+int openFile(Game *game, char *fileName);
+int openEmpty(Game *game);
 int solve(Game *game, char *fileName);
 int edit(Game *game, char *fileName);
 int markErrors(Game *game, int mark);
-/*int printBoard(Game *game);*/
+void printSep(int sepLen);
+int printBoard(Game *game);
 int set(Game *game, int x, int y, int z);
 int validate(Game *game);
+int existValue(Game *game, int row, int col);
+int generateHelp(Game *game,int x);
 int generate(Game *game, int x, int y);
-int undo(Game *game);
+int undo(Game *game, int show);
 int redo(Game *game);
+int saveToFile(Game *game,char *fileName);
 int save(Game *game, char *fileName);
 int hint(Game *game, int x, int y);
 int numSolutions(Game *game);

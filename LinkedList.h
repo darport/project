@@ -10,8 +10,7 @@ typedef struct node_t {
     struct node_t *prev;
 }Node;
 
-
 void freeList(Node *head);
-void addNode(Node *lst, int x, int y, int currZ, int prevZ);
+void addNode(Node **lst, int x, int y, int currZ, int prevZ);
 
 #endif /* LINKEDLIST_H_ */

@@ -4,12 +4,8 @@
 #include <ctype.h>
 #include "Game.h"
 
-int size(Game *game){
-	return (game->colsInBlock*game->rowsInBlock);
-}
-
 int isEmpty(Game *game){
-	int i,j, len = size(game);
+	int i,j, len = game->size;
 	for(i=0 ; i <len; i++){
 		for(j = 0; j < len; j++){
 			if(game->board[i][j].value != 0){
@@ -132,7 +128,7 @@ int callSave(Game *game){
 }
 
 int callHint(Game *game){
-	int i = 0, check, x, y, z;
+	int i = 0, check, x, y;
 	char *params[2];
 	while (i<2){ /* getting the parameters for set command */
 	   params[i] = strtok(NULL, " \t\r\n");
@@ -154,7 +150,7 @@ int callHint(Game *game){
 int getCommand(Game *game){
 	int charRead;
 	static char cmd[257];
-	char *commandType, fileName;
+	char *commandType;
 	charRead = scanf("%s", cmd);
 	if( charRead > 256){
 		return printInvalid();
@@ -187,7 +183,7 @@ int getCommand(Game *game){
 			return printBoard(game);
 		}
 		if(strcmp(commandType,"undo") == 0){
-			return undo(game);
+			return undo(game,1);
 		}
 		if(strcmp(commandType,"redo") == 0){
 			return redo(game);
