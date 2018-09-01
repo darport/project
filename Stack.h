@@ -11,10 +11,10 @@ typedef struct stack{
     Elem *top;
 }Stack;
 
-void push(Stack *stk,int val);
+int push(Stack *stk,int val);
 int pop(Stack *stk);
 int top(Stack *stk);
-void initialize(Stack *stk);
+int initialize(Stack *stk);
 void freeStk(Stack *stk);
 
 #endif /* STACK_H_ */
