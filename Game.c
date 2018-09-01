@@ -419,7 +419,24 @@ int save(Game *game, char *fileName){
 }
 
 int hint(Game *game, int x, int y){
-
+    if(isErroneous(game)){
+        printf("Error: board contains erroneous values\n");
+        return 0;
+    }
+    if(game->board[x][y].fixed){
+        printf("Error: cell is fixed\n");
+        return 0;
+    }
+    if(game->board[x][y].value != 0){ /* the cell is not fixed and its value != 0, i.e cell is not empty */
+        printf("Error: cell already contains a value\n");
+        return 0;
+    }
+    if(ILP(game) != 1){
+        printf("Error: board is unsolvable\n");
+        return 0;
+    }
+    printf("Hint: set cell to %d\n", game->solved[x][y].value); /* the ILP function updates the solved board */
+    return 1;
 }
 
 int numSolutions(Game *game){
