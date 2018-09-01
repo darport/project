@@ -1,88 +1,53 @@
+#include "Game.h"
+#include "Parser.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "Game.h"
-#include "MainAux.h"
 
-int printBoard(Game *game){
-    int sepLen = 4*game->size + game->rowsInBlock + 1, i, j, val;
-    for(i = 0; i<game->size; i++){
-        if(i%(game->rowsInBlock) == 0){
-            printSep(sepLen);
-            printf("\n");
-        }
-        for(j = 0; j < game->size; j++){
-            if(j%(game->colsInBlock) == 0){
-                printf("|");
-            }
-            printf(" ");
-            val = game->board[i][j].value;
-            if(val != 0){
-                printf("%2d", game->board[i][j].value);
-            }
-            else{
-                printf("  ");
-            }
-            if(game->board[i][j].fixed == 1){
-                printf(".");
-            }
-            else{
-                if(game->markErrors ||game->mode == 2)
-                {
-                    if(game->board[i][j].marked == 1){
-                        printf("*");
-                    }
-                    else{
-                        if( j!= game->size - 1){
-                            printf(" ");
-                        }
-                    }
-                }
-                else{
-                    if( j!= game->size - 1){
-                        printf(" ");
-                    }
-                }
 
-            }
-            if(j == game->size - 1){
-                printf("|");
-                printf("\n");
-            }
-        }
-    }
-    printSep(sepLen);
-    return 1;
-}
-
+/*check commit and pus */
 int main(){
-    Game *game;
-    Cell **board;
-    int i,j,size;
+	Game *game;
+	int i; /*,j,size;*/
+	game = (Game *)malloc(sizeof(game));
+	game->markErrors = 1;
+	/*
+	 *  ****initialization moved to the open files methodes****
+	 *
+	game->rowsInBlock = 4;
+	game->colsInBlock = 5;
+	game->size = 20;
+	size = game->size;
+	game->board = (Cell **)malloc(game->size*sizeof(Cell*));
+	game->solved = (Cell **)malloc(game->size*sizeof(Cell*));
+	for(i=0; i<game->size; i++){
+		game->board[i] = (Cell *)malloc(game->size*sizeof(Cell));
+		game->solved[i] = (Cell *)malloc(game->size*sizeof(Cell));
 
-    game = (Game *)malloc(sizeof(game));
-    game->rowsInBlock = 4;
-    game->colsInBlock = 5;
-    game->size = 20;
-    size = game->size;
-    board = (Cell **)malloc(game->size*sizeof(Cell*));
-    if(board == NULL){
-        return memoryError(); /* check if we need to close the file */
-    }
-    for(i=0; i<game->size; i++){
-        board[i] = (Cell *)malloc(game->size*sizeof(Cell));
-        if(board[i] == NULL){
-            return memoryError();
-        }
-    }
-
-    for(i=0; i<size; i++){
-        for(j=0; j<size; j++){
-            game->board[i][j].value = 1;
-        }
-    }
-
-    game->board = board;
-    printBoard(game);
-    freeGame(game);
-    return 1;
+	}
+	for(i=0; i<size; i++){
+		for(j=0; j<size; j++){
+			game->board[i][j].value = 1;
+			game->board[i][j].fixed = 1;
+			game->board[i][j].marked = 0;
+		}
+	}
+	*/
+	while(getCommand(game) != 0){
+		printBoard(game);
+		printf("comand done \n");
+		fflush(stdout);
+	}
+	/*printBoard(game);
+	printf("the value has changed ?? %d", game->markErrors);*/
+	if(game->board == NULL){
+		return 1;
+	}
+	for(i = 0; i < game->size; i++){
+		free(game->board[i]);
+		free(game->solved[i]);
+	}
+	free(game->board);
+	free(game->solved);
+	return 1;
 }
+
