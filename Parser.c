@@ -34,7 +34,7 @@ int isInt(char *num){
 
 int callSolve(Game *game){
 	char *fileName;
-	fileName = strtok(NULL, " /t/r/n");
+	fileName = strtok(NULL," \t\r\n");
 	if(fileName == NULL){
 		return printInvalid();
 	}
@@ -43,14 +43,14 @@ int callSolve(Game *game){
 
 int callEdit(Game *game){
 	char *fileName;
-	fileName = strtok(NULL, " /t/r/n");
+	fileName = strtok(NULL," \t\r\n");
 	return edit(game, fileName);
 }
 
 int callMarkErrors(Game *game){
 	char *mark;
 	int digit;
-	mark = strtok(NULL, " /t/r/n");
+	mark = strtok(NULL, " \t\r\n");
 	if(mark == NULL){ /* no number was entered after "mark_errors" */
 		return printInvalid(); /* check the error */
 	}
@@ -91,7 +91,7 @@ int callSet (Game *game){
 		y = isInt(params[1]);
 		z = isInt(params[2]);
 		if(inRange(game, x) && inRange(game, y) && (inRange(game, z) || z == 0)){
-			return set(game, x-1, y-1, z); /* i added the '-1' so it will suit our presentation of the board*/
+			return set(game, x-1, y-1, z, 1, 0); /* i added the '-1' so it will suit our presentation of the board*/
 		}
 		printf("Error: value not in range 0-%d\n", game->colsInBlock*game->rowsInBlock);
 		return 0;
@@ -120,7 +120,7 @@ int callGenerate (Game *game){
 
 int callSave(Game *game){
 	char *fileName;
-	fileName = strtok(NULL, " /t/r/n");
+	fileName = strtok(NULL, " \t\r\n");
 	if(fileName == NULL){
 		return printInvalid();
 	}
@@ -151,7 +151,7 @@ int getCommand(Game *game){
 	int charRead;
 	static char cmd[257];
 	char *commandType;
-	charRead = scanf("%s", cmd);
+	charRead = strlen(fgets(cmd,258,stdin)) -1 ;/*check the numbes*/
 	if( charRead > 256){
 		return printInvalid();
 	}
@@ -159,7 +159,6 @@ int getCommand(Game *game){
 	if(commandType == 0){ /* if no command was entered, returning to the main */
 		return 0;
 	}
-
 	/* available in all modes */
 	if(strcmp(commandType,"solve") == 0){
 		return callSolve(game);

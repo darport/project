@@ -1,5 +1,5 @@
 #include "LinkedList.h"
-
+#include <stdio.h>
 #ifndef GAME_H_
 #define GAME_H_
 
@@ -14,9 +14,9 @@ typedef struct cell_t{
 typedef struct game_t{
 	int mode; /* 0-init 1-solve 2-edit*/
 	int markErrors;
-	Cell **board ;
+	Cell **board;
 	Cell **solved;
-	Node *ops;
+	Link *ops;
 	int rowsInBlock;
 	int colsInBlock;
 	int size;
@@ -32,12 +32,14 @@ int edit(Game *game, char *fileName);
 int markErrors(Game *game, int mark);
 void printSep(int sepLen);
 int printBoard(Game *game);
-int set(Game *game, int x, int y, int z);
+int set(Game *game, int x, int y, int z,int show, int type);
 int validate(Game *game);
 int existValue(Game *game, int row, int col);
 int generateHelp(Game *game,int x);
 int generate(Game *game, int x, int y);
+int undoHelp(Game *game);
 int undo(Game *game, int show);
+int redoHelp(Game *game);
 int redo(Game *game);
 int saveToFile(Game *game,char *fileName);
 int save(Game *game, char *fileName);

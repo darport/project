@@ -6,11 +6,19 @@ typedef struct node_t {
     int y;
     int prevZ;
     int currZ;
+    int type; /* 0 - set, 1- autofill*/
     struct node_t *next;
     struct node_t *prev;
 }Node;
 
-void freeList(Node *head);
-void addNode(Node **lst, int x, int y, int currZ, int prevZ);
+typedef struct list_t{
+	Node *head;
+	struct list_t * next;
+	struct list_t * prev;
+}Link;
 
+void freeListNode(Node *head);
+void freeList(Link *head);
+void addNode(Node **lst, int x, int y, int currZ, int prevZ, int type);
+void addLink(Link **lst, int x, int y, int currZ, int prevZ, int type);
 #endif /* LINKEDLIST_H_ */

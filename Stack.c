@@ -43,7 +43,6 @@ int top(Stack *stk){
 }
 
 int initialize(Stack *stk){
-    stk = (Stack *)malloc(sizeof(Stack));
     if(stk == NULL){
         return memoryError();
     }

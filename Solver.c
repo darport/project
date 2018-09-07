@@ -72,10 +72,11 @@ void copyBack(Game *game, int ** copy, int size){
 }
 
 int eBacktracking(Game *game){
-    int counter = 0, row = 0, col = 0, flag; /*flag = 1 means that value was 0 before*/
+    int i,j,counter = 0, row = 0, col = 0, flag; /*flag = 1 means that value was 0 before*/
     Stack *stk;
     int **copy;
     copy = copyBoard(game->board, game->size);
+    stk = (Stack *)malloc(sizeof(Stack));
     initialize(stk);
     while(!(row == -1 && col == game->size -1)){
         if(row == game->size){

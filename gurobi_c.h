@@ -1,3 +1,5 @@
+/* Copyright 2018, Gurobi Optimization, LLC */
+
 #ifndef _GUROBI_C_H
 #define _GUROBI_C_H
 

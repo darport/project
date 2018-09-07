@@ -22,6 +22,8 @@ void setData(Game *game, char *data, int i, int j){
     int value = 0;
     game->board[i][j].fixed = 0;
     game->board[i][j].marked = 0;
+    game->board[i][j].needChange = 0;
+    game->board[i][j].valChange = 0;
     while(*data != '\0'){
         if(*data == '.'){ /* checking only . and not * because no erroneous values are allowed here */
             game->board[i][j].fixed = 1;
@@ -36,10 +38,10 @@ void setData(Game *game, char *data, int i, int j){
 
 int openFile(Game *game, char *fileName){ /*instead of initializing cell** and then assigning, i immediately assigned to game->board and solved,
  	 	 	 	 	 	 	 	 	 	 	 data * changed to data[2]*/
-    int i,j,m,n;
-    char data[2];
+    int i,j,m,n,size;
+    char data[3];
     FILE *fp = fopen(fileName, "r");
-    if (fp == NULL){
+    if(fp == NULL){
         printf("Error: File doesn't exist or cannot be opened\n");
         return 0;
     }
@@ -48,36 +50,47 @@ int openFile(Game *game, char *fileName){ /*instead of initializing cell** and t
     game->colsInBlock = n;
     game->rowsInBlock = m;
     game->size = m*n;
-    game->board = (Cell **)malloc(game->size*sizeof(Cell*));
+    size = game->size;
+    game->board = (Cell **)malloc(size*sizeof(Cell*));
+    game->solved = (Cell **)malloc(size*sizeof(Cell*));
+
     if(game->board == NULL){
         return memoryError(); /* check if we need to close the file */
     }
-    for(i=0; i<game->size; i++){
-        game->board[i] = (Cell *)malloc(game->size*sizeof(Cell));
+    if(game->solved == NULL){
+    	return memoryError(); /* check if we need to close the file */
+    }
+    for(i=0; i<size; i++){
+        game->board[i] = (Cell *)malloc(size*sizeof(Cell));
         if(game->board[i] == NULL){
             return memoryError();
         }
     }
-    game->solved = (Cell **)malloc(game->size*sizeof(Cell*));
-    if(game->solved == NULL){
-        return memoryError(); /* check if we need to close the file */
-    }
-    for(i=0; i<game->size; i++){
+    for(i=0; i<size; i++){
         game->solved[i] = (Cell *)malloc(game->size*sizeof(Cell));
         if(game->solved[i] == NULL){
             return memoryError();
         }
     }
 
-    for(i = 0; i<game->size; i++){
-        for(j = 0; j<game->size; j++){
+    for(i = 0; i<size; i++){
+        for(j = 0; j<size; j++){
+        	game->board[i][j].value = 0;
+        	game->board[i][j].fixed = 0;
+        	game->board[i][j].marked = 0;
+        	game->board[i][j].needChange = 0;
+        	game->board[i][j].valChange = 0;
+        	game->solved[i][j].value = 0;
+        	game->solved[i][j].fixed = 0;
+           	game->solved[i][j].marked = 0;
+           	game->solved[i][j].needChange = 0;
+           	game->solved[i][j].valChange = 0;
             fscanf(fp,"%s",data);
             setData(game,data,i,j);
         }
     }
-    if(fclose(fp) == EOF){
-        return fileError();
-    }
+
+    fclose(fp);
     return 1;
 }
 
@@ -93,6 +106,7 @@ int openEmpty(Game *game){    /*instead of initializing cell** and then assignin
             return memoryError();
         }
     }
+
     game->solved = (Cell **)malloc(game->size*sizeof(Cell*));
     if(game->solved == NULL){
         return memoryError();
@@ -106,29 +120,44 @@ int openEmpty(Game *game){    /*instead of initializing cell** and then assignin
     /* check if we need to initialize the fields to 0 */
     for(i = 0; i < game->size; i++){
         for(j = 0; j< game->size; j++){
-            game->board[i][j].value = 0;
-            game->board[i][j].fixed = 0;
-            game->board[i][j].marked = 0;
+        	game->board[i][j].value = 0;
+           	game->board[i][j].fixed = 0;
+           	game->board[i][j].marked = 0;
+          	game->board[i][j].needChange = 0;
+          	game->board[i][j].valChange = 0;
+           	game->solved[i][j].value = 0;
+           	game->solved[i][j].fixed = 0;
+          	game->solved[i][j].marked = 0;
+           	game->solved[i][j].needChange = 0;
+           	game->solved[i][j].valChange = 0;
         }
     }
-    /*game->board = board;
-    game->solved = solved;*/
     return 1;
 }
 
 int solve(Game *game, char *fileName){
-    game->mode = 1;
-    return openFile(game,fileName);
+	int success;
+	success = openFile(game,fileName);
+	if(success == 1){
+		game->mode = 1;
+	}
+    return success;
 }
 
 int edit(Game *game, char *x){
-    if(x == NULL){
-        game->size = 9;
-        game->colsInBlock = 3;
-        game->rowsInBlock = 3;
-        return openEmpty(game);
-    }
-    return openFile(game, x);
+	int success;
+	if(x == NULL){
+		game->mode = 2;
+		game->size = 9;
+		game->colsInBlock = 3;
+		game->rowsInBlock = 3;
+		return openEmpty(game);
+	}
+	success = openFile(game,x);
+	if(success == 1){
+		game->mode = 2;
+	}
+    return success;
 }
 
 int markErrors(Game *game, int mark){
@@ -166,15 +195,15 @@ int printBoard(Game *game){
                 printf(".");
             }
             else{
-                if(game->markErrors ||game->mode == 2)
+                if(game->markErrors || game->mode == 2)
                 {
                     if(game->board[i][j].marked == 1){
                         printf("*");
                     }
                     else{
-                        if( j!= game->size - 1){
+                        /*if( j!= game->size - 1){ why did we put this if statment*/
                             printf(" ");
-                        }
+                        /*}*/
                     }
                 }
                 else{
@@ -191,23 +220,68 @@ int printBoard(Game *game){
         }
     }
     printSep(sepLen);
+    printf("\n");
     return 1;
 }
 
-int set(Game *game, int x, int y, int z){
-    Node *temp;
+int validate(Game *game){
+    int valid;
+    if(isErroneous(game)){
+        printf("Error: board contains erroneous values\n");
+        return 0;
+    }
+    valid = 0;
+   /* valid = ILP(game);*/
+    if(valid){
+        printf("Validation passed: board is solvable\n");
+    }
+    else{
+        printf("Validation failed: board is unsolvable");
+        return 0;
+    }
+    return 1;
+}
+
+
+
+
+int set(Game *game, int x, int y, int z,int show,int type){
+    /*Node *temp;*/
+	Link *temp;
     int mark;
+    temp = (Link *)malloc(sizeof(Link));
+    if(temp == NULL){
+    	return memoryError();
+    }
     /* checking if the cell is fixed */
     if(game->board[x][y].fixed){
         printf("Error: cell is fixed\n");
         return 0;
     }
-    /* clearing any move beyond the current move from the undo-redo list */
-    temp = game->ops->next;
-    addNode(&game->ops, x, y, z, game->board[x][y].value);
-    if(temp != NULL){
-        freeList(temp);
+    if(game->board[x][y].value == z){
+    	return 0;
     }
+    /* clearing any move beyond the current move from the undo-redo list */
+
+   	if(game->ops->next != NULL){
+   		temp = game->ops->next;
+   	}
+   	else{
+   		temp = NULL;
+  	}
+
+   	if(temp != NULL){
+   		freeList(temp);
+   	}
+   	/*adding a new link for set operation or a new node for autofill operation*/
+   	if(!type){
+   		addLink(&game->ops, x, y, z, game->board[x][y].value,type);
+   	}
+   	else{
+   		addNode(&game->ops->head, x, y, z, game->board[x][y].value,type);
+   	}
+
+
     /* if the value z is erroneous, mark will be 1 and all the non fixed cells that b
      * become erroneous because of z will be marked by isValid */
     mark = !isValid(game,x,y,z,1);
@@ -215,10 +289,15 @@ int set(Game *game, int x, int y, int z){
     game->board[x][y].marked = mark;
     /* updating erroneous cells and printing the board */
     updateErroneous(game);
-    printBoard(game);
+    if(show){
+    	printBoard(game);
+    }
     if(game->mode == 1){
         /* if the board is full, validating the board */
         if(isFull(game)){
+        	if(!show){
+        		printBoard(game);
+        	}
             if(validate(game)){
                 printf("Puzzle solved successfully\n");
                 game->mode = 0;
@@ -231,22 +310,6 @@ int set(Game *game, int x, int y, int z){
     return 1;
 }
 
-int validate(Game *game){
-    int valid;
-    if(isErroneous(game)){
-        printf("Error: board contains erroneous values\n");
-        return 0;
-    }
-    valid = ILP(game);
-    if(valid){
-        printf("Validation passed: board is solvable\n");
-    }
-    else{
-        printf("Validation failed: board is unsolvable");
-        return 0;
-    }
-    return 1;
-}
 
 int existValue(Game *game, int row, int col){
     int i;
@@ -277,9 +340,10 @@ int generateHelp(Game *game, int x){
         }
         game->board[row][col].value = z;
     }
+    /*
     if(ILP(game) != 1){
         return 0;
-    }
+    }*/
     return 1;
 }
 
@@ -319,61 +383,154 @@ int generate(Game *game, int x, int y){
     return 1;
 }
 
-int undo(Game *game, int show){
-    int x, y, z,curr;
-    if(game->ops->prev != NULL){
-        x = game->ops->x;
-        y = game->ops->y;
-        z = game->ops->prevZ;
-        game->board[x][y].value = z;
-        game->ops = game->ops->prev;
-        if(show){
-            printBoard(game);
-        }
-        curr = game->ops->currZ;
-        if(curr != 0 && z != 0){
-            printf("Undo %d,%d: from %d to %d\n", x, y,curr, z);
-        }
-        else if(curr == 0 && z!= 0){
-            printf("Undo %d,%d: from _to %d\n", x, y,z);
-        }
-        else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
-            printf("Undo %d,%d: from %d to _\n", x, y,curr);
-
-        }
-        /*else both 0 check */
-        return 1;
-    }
-    printf("Error: no moves to undo\n");
-    return 0;
+int undoHelp(Game *game){
+	int x, y, z,curr,flag = 1;
+	x = game->ops->head->x;
+   	y = game->ops->head->y;
+   	z = game->ops->head->prevZ;
+   	game->board[x][y].value = z;
+   	curr = game->ops->head->currZ;
+   	if(game->ops->head->prev != NULL){
+   		game->ops->head = game->ops->head->prev;
+   	}
+   	else{
+   		flag = 0;
+   	}
+   	updateErroneous(game);
+   	/*curr = game->ops->currZ; moved up 8 lines*/
+   	if(curr != 0 && z != 0){
+   		printf("Undo %d,%d: from %d to %d\n", x + 1, y + 1,curr, z);
+	}
+   	else if(curr == 0 && z!= 0){
+   		printf("Undo %d,%d: from _to %d\n", x + 1, y + 1,z);
+   	}
+   	else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
+   		printf("Undo %d,%d: from %d to _\n", x + 1, y + 1,curr);
+   	}
+   	return flag;
 }
+
+
+int undo(Game *game, int show){
+    /*int x, y, z,curr,type,typePrev = 0;*/
+    /*
+    if(game->ops == NULL){
+    	printf("Error: no moves to undo\n");
+    	return 0;
+    }
+    */
+    if(game->ops->prev == NULL){
+    	printf("Error: no moves to undo\n");
+    	return 0;
+    }
+
+    while(undoHelp(game)){}
+    game->ops = game->ops->prev;
+
+    if(show){printBoard(game);}
+    return 1;
+   /*
+    do{
+    	type = game->ops->type;
+    	if(type == 1){
+    		typePrev = game->ops->prev->type;
+    	}
+    	x = game->ops->x;
+    	y = game->ops->y;
+    	z = game->ops->prevZ;
+    	game->board[x][y].value = z;
+    	curr = game->ops->currZ;
+    	game->ops = game->ops->prev;
+    	updateErroneous(game);
+    	/*curr = game->ops->currZ; moved up 8 lines*/
+    	/*if(curr != 0 && z != 0){
+    		printf("Undo %d,%d: from %d to %d\n", x + 1, y + 1,curr, z);
+    	}
+    	else if(curr == 0 && z!= 0){
+    		printf("Undo %d,%d: from _to %d\n", x + 1, y + 1,z);
+       		}
+        	else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0
+        		printf("Undo %d,%d: from %d to _\n", x + 1, y + 1,curr);
+        		}
+        /*else both 0 check */
+   /* }while(type && typePrev);
+  	printBoard(game);
+    return 1;*/
+
+}
+int redoHelp(Game *game){
+	int x,y,z, prev, flag = 1;
+	/*game->ops->head = game->ops->head->next;*/
+	x = game->ops->head->x;
+	y = game->ops->head->y;
+	z = game->ops->head->currZ;
+	game->board[x][y].value = z;
+	prev = game->ops->head->prevZ;
+	updateErroneous(game);
+	if(prev != 0 && z != 0){
+		printf(	"Redo %d,%d: from %d to %d\n", x + 1, y + 1,prev, z);
+	}
+	else if(prev == 0 && z!= 0){
+		printf("Redo %d,%d: from _to %d\n", x + 1, y + 1,z);
+	}
+	else if(prev != 0){  /*in this case z == 0 because the first condition was curr != 0 && z != 0*/
+		printf("Redo %d,%d: from %d to _\n", x + 1, y + 1,prev);
+	}
+	if(game->ops->head->next != NULL){
+		game->ops->head = game->ops->head->next;
+	}
+	else{flag = 0;}
+	return flag;
+}
+
 
 int redo(Game *game){
-    int x,y,z, prev;
-    if(game->ops->next != NULL){
-        game->ops = game->ops->next;
-        x = game->ops->x;
-        y = game->ops->y;
-        z = game->ops->currZ;
-        game->board[x][y].value = z;
-        prev = game->ops->prevZ;
-        if(prev != 0 && z != 0){
-            printf(""
-                   ""
-                   "Redo %d,%d: from %d to %d\n", x, y,prev, z);
-        }
-        else if(prev == 0 && z!= 0){
-            printf("Redo %d,%d: from _to %d\n", x, y,z);
-        }
-        else if(prev != 0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
-            printf("Redo %d,%d: from %d to _\n", x, y,prev);
-        }
-        /*else both 0 check */
-        return 1;
+    if(game->ops->next == NULL){
+    	printf("Error: no moves to redo\n");
+    	return 0;
     }
-    printf("Error: no moves to redo\n");
-    return 0;
+
+    game->ops = game->ops->next;
+    while(redoHelp(game)){}
+
+    printBoard(game);
+    return 1;
+
+
+    /*do{
+    	if(game->ops->next == NULL){
+    		break;
+    	}
+    	game->ops = game->ops->next;
+    	type = game->ops->type;
+
+    	x = game->ops->x;
+    	y = game->ops->y;
+    	z = game->ops->currZ;
+    	game->board[x][y].value = z;
+    	prev = game->ops->prevZ;
+    	updateErroneous(game);
+    	if(prev != 0 && z != 0){
+    		printf(""
+    				""
+    				"Redo %d,%d: from %d to %d\n", x + 1, y + 1,prev, z);
+    	}
+    	else if(prev == 0 && z!= 0){
+    		printf("Redo %d,%d: from _to %d\n", x + 1, y + 1,z);
+    	}
+    	else if(prev != 0){  in this case z == 0 because the first condition was curr != 0 && z != 0
+    		printf("Redo %d,%d: from %d to _\n", x + 1, y + 1,prev);
+    	}
+    	if(game->ops->next != NULL){
+    		typeNext = game->ops->next->type;
+    	}
+    }while(type && typeNext); */
+    /*else both 0 check
+    printBoard(game);
+    return 1; */
 }
+
+
 
 int saveToFile(Game *game,char *fileName){
     FILE *fp = fopen(fileName, "w");
@@ -431,10 +588,10 @@ int hint(Game *game, int x, int y){
         printf("Error: cell already contains a value\n");
         return 0;
     }
-    if(ILP(game) != 1){
+    /*if(ILP(game) != 1){
         printf("Error: board is unsolvable\n");
         return 0;
-    }
+    }*/
     printf("Hint: set cell to %d\n", game->solved[x][y].value); /* the ILP function updates the solved board */
     return 1;
 }
@@ -461,13 +618,26 @@ int autofill(Game *game){
     }
     markChanges(game);
     setChanges(game);
+    if(!isFull(game)){
+    	printBoard(game);
+    }
     return 1;
 }
 
 int reset(Game *game){
+	Link *temp;
     while(undo(game,0)){}
-    freeList(game->ops);
-    game->ops = NULL;
+    if(game->ops->next != NULL){
+    	temp = game->ops->next;
+    }
+    else{
+    	temp = NULL;
+    }
+
+    if(temp != NULL){
+    	freeList(temp);
+    }
+    game->ops->next = NULL;
     printf("Board reset\n");
     return 1;
 }
@@ -475,5 +645,6 @@ int reset(Game *game){
 int exitGame(Game *game){
     printf("Exiting...\n");
     freeGame(game);
-    return 1;
+    return -1;
 }
+
