@@ -98,6 +98,12 @@ int callSet (Game *game){
 	}
 	return printInvalid();
 }
+int inRangeGen(Game *game, int num){
+	if(num < 1 || num >(game->size*game->size)){
+		return 0;
+	}
+	return 1;
+}
 int callGenerate (Game *game){
 	int i = 0, x, y, check;
 	char *params[2];
@@ -109,7 +115,7 @@ int callGenerate (Game *game){
 	if(check == 1){
 		x = isInt(params[0]);
 		y = isInt(params[1]);
-		if(inRange(game, x) && inRange(game, y)){
+		if(inRangeGen(game,x)  && inRangeGen(game, y)){
 			return generate(game, x, y);
 		}
 		printf("Error: value not in range 0-%d\n", game->colsInBlock*game->rowsInBlock);

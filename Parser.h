@@ -16,5 +16,6 @@ int callGenerate(Game *game);
 int callSave(Game *game);
 int callHint(Game *game);
 int getCommand(Game *game);
+int inRangeGen(Game *game, int num);
 
 #endif /* PARSER_H_ */

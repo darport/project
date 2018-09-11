@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include "Game.h"
 #include "Solver.h"
-#include "mainAux.h"
 #include "ILPSolver.h"
+#include "MainAux.h"
+#include "detSolver.h"
+#include "LinkedList.h"
 
 int isFull(Game *game){
     int i,j;
@@ -231,7 +233,9 @@ int validate(Game *game){
         return 0;
     }
     valid = 0;
-   /* valid = ILP(game);*/
+   /* valid = ILP(game);
+    valid = detBacktracking(game);*/
+    valid = validateChange(game);
     if(valid){
         printf("Validation passed: board is solvable\n");
     }
@@ -239,6 +243,7 @@ int validate(Game *game){
         printf("Validation failed: board is unsolvable");
         return 0;
     }
+    printBoard(game);
     return 1;
 }
 
@@ -414,12 +419,13 @@ int generateHelp(Game *game, int x){
         while(!isValid(game,row,col,z,0)){
             z = rand() % game->size + 1;
         }
-        set(game,row,col,z,0,1);
-
+        game->board[row][col].value = z;
+    }
+    if(validateChange(game) != 1){
+    	return 0;
     }
     /*
     if(ILP(game) != 1){
-    	undo(Game, 0);
         return 0;
 
     }*/
@@ -427,7 +433,13 @@ int generateHelp(Game *game, int x){
 }
 
 int generate(Game *game, int x, int y){
-    int i, row, col;
+    int i, row, col, temp;
+   	Link *new = (Link*)malloc(sizeof(Link));
+   	new->head = NULL;
+   	new->next = NULL;
+   	new->prev = game->ops;
+   	game->ops->next = new;
+   	game->ops = new;
     cleanBoard(game); /* check */
     for(i = 0; i<1000; i++){
         if(generateHelp(game,x)){
@@ -439,19 +451,20 @@ int generate(Game *game, int x, int y){
         printf("Error: puzzle generator failed\n");
         return 0;
     }
+
     for(i = 0; i<y; i++){
         row = rand() % game->size;
         col = rand() % game->size;
-        while(game->board[row][col].fixed){
+        while(game->board[row][col].marked == 1){
             row = rand() % game->size;
             col = rand() % game->size;
         }
         game->board[row][col].marked = 1; /* we use the marked field out of context,
 		just to mark cells that have been chosen to be filled */
     }
-    for(row = 0; row<game->size; row++){
-        for(col =0; col< game->size; col++){
-            if(!game->board[row][col].marked){
+    for(row = 0; row < (game->size); row++){
+        for(col = 0; col< (game->size); col++){
+            if(game->board[row][col].marked == 0){
                 game->board[row][col].value = 0;
             }
             else{ /* the cell is marked, we need to set it back to 0 */
@@ -459,6 +472,16 @@ int generate(Game *game, int x, int y){
             }
         }
     }
+    for(row = 0; row < (game->size); row++){
+            for(col = 0; col< (game->size); col++){
+                if(game->board[row][col].value != 0){
+                	temp = game->board[row][col].value;
+                	game->board[row][col].value = 0;
+                	set(game,row,col,temp,0,1);
+                }
+            }
+        }
+    printBoard(game);
     return 1;
 }
 
@@ -571,7 +594,8 @@ int save(Game *game, char *fileName){
             return erroneous();
         }
         else{
-            check = validate(game);
+            /*check = validate(game);*/
+        	check = 1;
             if(!check){
                 printf("Error: board validation failed\n");
                 return 0;
