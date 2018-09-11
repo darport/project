@@ -1,10 +1,3 @@
-/*
- * detSolver.h
- *
- *  Created on: 11 בספט׳ 2018
- *      Author: Dell
- */
-
 #ifndef DETSOLVER_H_
 #define DETSOLVER_H_
 

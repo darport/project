@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "MainAux.h"
+#include "mainAux.h"
 #include "Solver.h"
 #include <stdio.h>
 #include <time.h>

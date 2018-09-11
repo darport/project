@@ -3,7 +3,7 @@
 #include "Game.h"
 #include "Solver.h"
 #include "ILPSolver.h"
-#include "MainAux.h"
+#include "mainAux.h"
 #include "detSolver.h"
 #include "LinkedList.h"
 
