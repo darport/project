@@ -3,7 +3,7 @@
 #include "Game.h"
 #include "Solver.h"
 #include "ILPSolver.h"
-#include "mainAux.h"
+#include "MainAux.h"
 #include "detSolver.h"
 #include "LinkedList.h"
 
@@ -233,9 +233,9 @@ int validate(Game *game){
         return 0;
     }
     valid = 0;
-   /* valid = ILP(game);
-    valid = detBacktracking(game);*/
-    valid = validateChange(game);
+    valid = ILP(game);
+   /* valid = detBacktracking(game);
+    valid = validateChange(game);*/
     if(valid){
         printf("Validation passed: board is solvable\n");
     }
@@ -421,14 +421,14 @@ int generateHelp(Game *game, int x){
         }
         game->board[row][col].value = z;
     }
-    if(validateChange(game) != 1){
+   /* if(validateChange(game) != 1){
     	return 0;
-    }
-    /*
+    } */
+
     if(ILP(game) != 1){
         return 0;
 
-    }*/
+    }
     return 1;
 }
 
@@ -462,6 +462,7 @@ int generate(Game *game, int x, int y){
         game->board[row][col].marked = 1; /* we use the marked field out of context,
 		just to mark cells that have been chosen to be filled */
     }
+   /* boardCopy(game); /*saves the board to solved - probably useless here*/
     for(row = 0; row < (game->size); row++){
         for(col = 0; col< (game->size); col++){
             if(game->board[row][col].marked == 0){
@@ -475,7 +476,7 @@ int generate(Game *game, int x, int y){
     for(row = 0; row < (game->size); row++){
             for(col = 0; col< (game->size); col++){
                 if(game->board[row][col].value != 0){
-                	temp = game->board[row][col].value;
+                	temp = game->solved[row][col].value;
                 	game->board[row][col].value = 0;
                 	set(game,row,col,temp,0,1);
                 }
@@ -594,8 +595,8 @@ int save(Game *game, char *fileName){
             return erroneous();
         }
         else{
-            /*check = validate(game);*/
-        	check = 1;
+            check = validate(game);
+        	/*check = 1;*/
             if(!check){
                 printf("Error: board validation failed\n");
                 return 0;
@@ -618,10 +619,10 @@ int hint(Game *game, int x, int y){
         printf("Error: cell already contains a value\n");
         return 0;
     }
-    /*if(ILP(game) != 1){
+    if(ILP(game) != 1){
         printf("Error: board is unsolvable\n");
         return 0;
-    }*/
+    }
     printf("Hint: set cell to %d\n", game->solved[x][y].value); /* the ILP function updates the solved board */
     return 1;
 }
