@@ -321,67 +321,6 @@ int existValue(Game *game, int row, int col){
     return 0;
 }
 
-int generateHelp(Game *game, int x){
-    int i,row,col, z;
-    /* generating puzzle with randomly filling x cells with legal values */
-    for(i = 0; i<x; i++){
-        row = rand() % game->size;
-        col = rand() % game->size;
-        while(game->board[row][col].value == 0){
-            row = rand() % game->size;
-            col = rand() % game->size;
-        }
-        z = rand() % game->size + 1;
-        if(!existValue(game,row,col)){
-            return 0;
-        }
-        while(!isValid(game,row,col,z,0)){
-            z = rand() % game->size + 1;
-        }
-        game->board[row][col].value = z;
-    }
-    /*
-    if(ILP(game) != 1){
-        return 0;
-    }*/
-    return 1;
-}
-
-int generate(Game *game, int x, int y){
-    int i, row, col;
-    cleanBoard(game); /* check */
-    for(i = 0; i<1000; i++){
-        if(generateHelp(game,x)){
-            break;
-        }
-        cleanBoard(game);
-    }
-    if(i == 1000){
-        printf("Error: puzzle generator failed\n");
-        return 0;
-    }
-    for(i = 0; i<y; i++){
-        row = rand() % game->size;
-        col = rand() % game->size;
-        while(game->board[row][col].fixed){
-            row = rand() % game->size;
-            col = rand() % game->size;
-        }
-        game->board[row][col].marked = 1; /* we use the marked field out of context,
-		just to mark cells that have been chosen to be filled */
-    }
-    for(row = 0; row<game->size; row++){
-        for(col =0; col< game->size; col++){
-            if(!game->board[row][col].marked){
-                game->board[row][col].value = 0;
-            }
-            else{ /* the cell is marked, we need to set it back to 0 */
-                game->board[row][col].marked = 0;
-            }
-        }
-    }
-    return 1;
-}
 
 int undoHelp(Game *game){
 	int x, y, z,curr,flag = 1;
@@ -456,8 +395,75 @@ int undo(Game *game, int show){
    /* }while(type && typePrev);
   	printBoard(game);
     return 1;*/
-
 }
+
+int generateHelp(Game *game, int x){
+    int i,row,col, z;
+    /* generating puzzle with randomly filling x cells with legal values */
+    for(i = 0; i<x; i++){
+        row = rand() % game->size;
+        col = rand() % game->size;
+        while(game->board[row][col].value != 0){
+            row = rand() % game->size;
+            col = rand() % game->size;
+        }
+        z = rand() % game->size + 1;
+        if(!existValue(game,row,col)){
+            return 0;
+        }
+        while(!isValid(game,row,col,z,0)){
+            z = rand() % game->size + 1;
+        }
+        set(game,row,col,z,0,1);
+
+    }
+    /*
+    if(ILP(game) != 1){
+    	undo(Game, 0);
+        return 0;
+
+    }*/
+    return 1;
+}
+
+int generate(Game *game, int x, int y){
+    int i, row, col;
+    cleanBoard(game); /* check */
+    for(i = 0; i<1000; i++){
+        if(generateHelp(game,x)){
+            break;
+        }
+        cleanBoard(game);
+    }
+    if(i == 1000){
+        printf("Error: puzzle generator failed\n");
+        return 0;
+    }
+    for(i = 0; i<y; i++){
+        row = rand() % game->size;
+        col = rand() % game->size;
+        while(game->board[row][col].fixed){
+            row = rand() % game->size;
+            col = rand() % game->size;
+        }
+        game->board[row][col].marked = 1; /* we use the marked field out of context,
+		just to mark cells that have been chosen to be filled */
+    }
+    for(row = 0; row<game->size; row++){
+        for(col =0; col< game->size; col++){
+            if(!game->board[row][col].marked){
+                game->board[row][col].value = 0;
+            }
+            else{ /* the cell is marked, we need to set it back to 0 */
+                game->board[row][col].marked = 0;
+            }
+        }
+    }
+    return 1;
+}
+
+
+
 int redoHelp(Game *game){
 	int x,y,z, prev, flag = 1;
 	/*game->ops->head = game->ops->head->next;*/
