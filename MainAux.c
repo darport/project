@@ -2,6 +2,20 @@
 #include <stdio.h>
 #include "Game.h"
 
+
+void initializeOps(Game *game){
+	game->ops->next = NULL;
+	game->ops->prev = NULL;
+	game->ops->head->x = 0;
+	game->ops->head->y = 0;
+	game->ops->head->currZ = 0;
+	game->ops->head->prevZ = 0;
+	game->ops->head->type = 0;
+	game->ops->head->next = NULL;
+	game->ops->head->prev = NULL;
+}
+
+
 void cleanBoard(Game * game){
 	int i, j;
 	for(i = 0; i<game->size; i++){
@@ -15,13 +29,25 @@ void cleanBoard(Game * game){
 
 void freeGame(Game *game){
 	int i;
-	for(i = 0; i < game->size; i++){
-		free(game->board[i]);
-		free(game->solved[i]);
+	if(game->board != NULL){
+		for(i = 0; i < game->size; i++){
+			free(game->board[i]);
+		}
+		free(game->board);
+		game->board = NULL;
 	}
-	free(game->board);
-	free(game->solved);
-	freeList(game->ops);
+	if(game->solved != NULL){
+		for(i = 0; i < game->size; i++){
+			free(game->solved[i]);
+		}
+		free(game->solved);
+		game->solved = NULL;
+	}
+
+	if(game->ops != NULL){
+		freeList(game->ops);
+		game->ops = NULL;
+	}
 	/*free(game); for unknown reason this line terminates the program */
 }
 
@@ -163,13 +189,28 @@ void markChanges(Game *game){
 }
 
 void setChanges(Game *game){
-	int i,j;
+	int i,j, flag = 0;
+	Link *temp;
+	Link *new = (Link*)malloc(sizeof(Link));
+	new->head = NULL;
+	new->next = NULL;
+	new->prev = game->ops;
+	game->ops->next = new;
+	game->ops = new;
 	for(i=0 ; i < game->size; i++){
 		for(j=0; j < game->size; j++){
 			if(game->board[i][j].needChange){
+				flag = 1;
+				set(game,i,j,game->board[i][j].valChange,0,1);
 				game->board[i][j].value = game->board[i][j].valChange;
 				game->board[i][j].needChange = 0;
 			}
 		}
+	}
+	if(flag == 0){
+		temp = game->ops;
+		game->ops = game->ops->prev;
+		game->ops->next = NULL;
+		free(temp);
 	}
 }

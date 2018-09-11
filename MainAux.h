@@ -1,6 +1,10 @@
+#include "Game.h"
+
 #ifndef MAINAUX_H_
 #define MAINAUX_H_
 
+
+void initializeOps(Game *game);
 void cleanBoard(Game * game);
 void freeGame(Game *game);
 int memoryError();
