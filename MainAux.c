@@ -1,7 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "Game.h"
+#include "LinkedList.h"
 
+
+void boardCopy(Game *game){
+	int i,j;
+	for(i = 0;i <game->size; i++){
+		for(j = 0; j<game->size; j++){
+			game->solved[i][j].value = game->board[i][j].value;
+		}
+	}
+}
 
 void initializeOps(Game *game){
 	game->ops->next = NULL;
@@ -14,6 +24,7 @@ void initializeOps(Game *game){
 	game->ops->head->next = NULL;
 	game->ops->head->prev = NULL;
 }
+
 
 
 void cleanBoard(Game * game){
@@ -214,3 +225,8 @@ void setChanges(Game *game){
 		free(temp);
 	}
 }
+
+
+
+
+

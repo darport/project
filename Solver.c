@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "Game.h"
+#include "MainAux.h"
 #include "Stack.h"
-#include "mainAux.h"
 
 void updateIndexForward(int *row, int *col, Game *game){
     if(*col < game->size-1){
@@ -72,7 +72,7 @@ void copyBack(Game *game, int ** copy, int size){
 }
 
 int eBacktracking(Game *game){
-    int i,j,counter = 0, row = 0, col = 0, flag; /*flag = 1 means that value was 0 before*/
+    int counter = 0, row = 0, col = 0, flag; /*flag = 1 means that value was 0 before*/
     Stack *stk;
     int **copy;
     copy = copyBoard(game->board, game->size);

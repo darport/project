@@ -1,8 +1,8 @@
 #include "Game.h"
 #include "Parser.h"
-#include "mainAux.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "MainAux.h"
 
 
 /*check commit and pus */

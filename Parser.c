@@ -188,7 +188,7 @@ int getCommand(Game *game){
 			return printBoard(game);
 		}
 		if(strcmp(commandType,"undo") == 0){
-			return undo(game,1);
+			return undo(game,1,0);
 		}
 		if(strcmp(commandType,"redo") == 0){
 			return redo(game);

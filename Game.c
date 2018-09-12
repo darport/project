@@ -4,8 +4,18 @@
 #include "Solver.h"
 #include "ILPSolver.h"
 #include "MainAux.h"
-#include "detSolver.h"
 #include "LinkedList.h"
+
+
+void resetOps(Game *game){
+	Link *newLink = (Link*)malloc(sizeof(Link));
+	newLink->head = (Node*)malloc(sizeof(Node));
+	Link *temp = game->ops;
+	game->ops = newLink;
+	initializeOps(game);
+	freeList(temp);
+}
+
 
 int isFull(Game *game){
     int i,j;
@@ -141,6 +151,7 @@ int solve(Game *game, char *fileName){
 	int success;
 	success = openFile(game,fileName);
 	if(success == 1){
+		resetOps(game);
 		game->mode = 1;
 	}
     return success;
@@ -153,10 +164,12 @@ int edit(Game *game, char *x){
 		game->size = 9;
 		game->colsInBlock = 3;
 		game->rowsInBlock = 3;
+		resetOps(game);
 		return openEmpty(game);
 	}
 	success = openFile(game,x);
 	if(success == 1){
+		resetOps(game);
 		game->mode = 2;
 	}
     return success;
@@ -233,7 +246,8 @@ int validate(Game *game){
         return 0;
     }
     valid = 0;
-    valid = ILP(game);
+
+    valid = ILP(game,0);
    /* valid = detBacktracking(game);
     valid = validateChange(game);*/
     if(valid){
@@ -259,7 +273,7 @@ int set(Game *game, int x, int y, int z,int show,int type){
     	return memoryError();
     }
     /* checking if the cell is fixed */
-    if(game->board[x][y].fixed){
+    if(game->board[x][y].fixed && game->mode != 2){ /*needs to be checked!!!!*/
         printf("Error: cell is fixed\n");
         return 0;
     }
@@ -327,21 +341,24 @@ int existValue(Game *game, int row, int col){
 }
 
 
-int undoHelp(Game *game){
+int undoHelp(Game *game, int reset){
 	int x, y, z,curr,flag = 1;
 	x = game->ops->head->x;
    	y = game->ops->head->y;
    	z = game->ops->head->prevZ;
    	game->board[x][y].value = z;
    	curr = game->ops->head->currZ;
-   	if(game->ops->head->prev != NULL){
-   		game->ops->head = game->ops->head->prev;
+   	if(game->ops->head->next != NULL){
+   		game->ops->head = game->ops->head->next;
    	}
    	else{
    		flag = 0;
    	}
    	updateErroneous(game);
    	/*curr = game->ops->currZ; moved up 8 lines*/
+   	if(reset == 1){
+   		return flag;
+   	}
    	if(curr != 0 && z != 0){
    		printf("Undo %d,%d: from %d to %d\n", x + 1, y + 1,curr, z);
 	}
@@ -355,7 +372,7 @@ int undoHelp(Game *game){
 }
 
 
-int undo(Game *game, int show){
+int undo(Game *game, int show, int reset){
     /*int x, y, z,curr,type,typePrev = 0;*/
     /*
     if(game->ops == NULL){
@@ -364,11 +381,18 @@ int undo(Game *game, int show){
     }
     */
     if(game->ops->prev == NULL){
-    	printf("Error: no moves to undo\n");
+    	if(reset == 0){
+        	printf("Error: no moves to undo\n");
+    	}
     	return 0;
     }
-
-    while(undoHelp(game)){}
+    while(game->ops->head->prev != NULL){
+    	game->ops->head = game->ops->head->prev;
+    }
+    while(undoHelp(game,reset)){}
+    while(game->ops->head->prev != NULL){
+    	game->ops->head = game->ops->head->prev;
+    }
     game->ops = game->ops->prev;
 
     if(show){printBoard(game);}
@@ -421,11 +445,12 @@ int generateHelp(Game *game, int x){
         }
         game->board[row][col].value = z;
     }
-   /* if(validateChange(game) != 1){
+    /*
+    if(validateChange(game) != 1){
     	return 0;
-    } */
+    }*/
 
-    if(ILP(game) != 1){
+    if(ILP(game,1) != 1){
         return 0;
 
     }
@@ -451,37 +476,37 @@ int generate(Game *game, int x, int y){
         printf("Error: puzzle generator failed\n");
         return 0;
     }
-
+    cleanBoard(game);
     for(i = 0; i<y; i++){
         row = rand() % game->size;
         col = rand() % game->size;
-        while(game->board[row][col].marked == 1){
+        while(game->board[row][col].value == -1){
             row = rand() % game->size;
             col = rand() % game->size;
         }
-        game->board[row][col].marked = 1; /* we use the marked field out of context,
+        game->board[row][col].value = -1; /* we use the marked field out of context,
 		just to mark cells that have been chosen to be filled */
     }
-   /* boardCopy(game); /*saves the board to solved - probably useless here*/
-    for(row = 0; row < (game->size); row++){
-        for(col = 0; col< (game->size); col++){
-            if(game->board[row][col].marked == 0){
-                game->board[row][col].value = 0;
-            }
-            else{ /* the cell is marked, we need to set it back to 0 */
-                game->board[row][col].marked = 0;
-            }
-        }
+
+    for(row = 0; row<game->size;row++){
+    	for(col = 0; col<game->size;col++){
+    		if(game->board[row][col].value == -1){
+    			game->board[row][col].value = 0;
+    			temp = game->solved[row][col].value;
+    			set(game,row,col,temp,0,1);
+    		}
+    	}
     }
+
+    /*
     for(row = 0; row < (game->size); row++){
-            for(col = 0; col< (game->size); col++){
-                if(game->board[row][col].value != 0){
-                	temp = game->solved[row][col].value;
-                	game->board[row][col].value = 0;
-                	set(game,row,col,temp,0,1);
+    	for(col = 0; col< (game->size); col++){
+    		if(game->board[row][col].marked != 0){
+               	temp = game->solved[row][col].value;
+               	set(game,row,col,temp,0,1);
                 }
             }
-        }
+        }*/
     printBoard(game);
     return 1;
 }
@@ -619,7 +644,8 @@ int hint(Game *game, int x, int y){
         printf("Error: cell already contains a value\n");
         return 0;
     }
-    if(ILP(game) != 1){
+
+    if(ILP(game,1) != 1){
         printf("Error: board is unsolvable\n");
         return 0;
     }
@@ -657,7 +683,7 @@ int autofill(Game *game){
 
 int reset(Game *game){
 	Link *temp;
-    while(undo(game,0)){}
+    while(undo(game,0,1)){}
     if(game->ops->next != NULL){
     	temp = game->ops->next;
     }

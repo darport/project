@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mainAux.h"
 #include "Game.h"
 #include "LinkedList.h"
+#include "MainAux.h"
 
 void freeListNode(Node *head){
     if(head->next != NULL){

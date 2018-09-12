@@ -22,7 +22,7 @@ typedef struct game_t{
 	int size;
 } Game;
 
-
+void resetOps(Game *game);
 int isFull(Game *game);
 void setData(Game *game, char *data, int i, int j);
 int openFile(Game *game, char *fileName);
@@ -37,8 +37,8 @@ int validate(Game *game);
 int existValue(Game *game, int row, int col);
 int generateHelp(Game *game,int x);
 int generate(Game *game, int x, int y);
-int undoHelp(Game *game);
-int undo(Game *game, int show);
+int undoHelp(Game *game,int reset);
+int undo(Game *game, int show,int reset);
 int redoHelp(Game *game);
 int redo(Game *game);
 int saveToFile(Game *game,char *fileName);

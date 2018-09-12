@@ -1,223 +1,271 @@
-#include <stdio.h>
-#include <stdlib.h>
+
+
 #include "gurobi_c.h"
-#include "Game.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "MainAux.h"
 
-void updateSolved(Game *game, double *sol){
-    int i,j,k, size = game->size;
-    for(i = 0; i<size; i++){
-        for(j = 0; j<size; j++){
-            for(k = 0; k<size; k++){
-                if(sol[i*size*size + j*size +k] == 1){
-                    game->solved[i][j].value = k + 1;
-                }
-            }
-        }
-    }
-}
 
-void freeILP(double *sol, int *ind, double *val,double *obj, char *vtype, GRBmodel *model, GRBenv *env){
+void freeILP(double *sol, int *ind, int *ind2, double *val, double *val2, double *lb, char *vtype, GRBenv *env,
+             GRBmodel *model) {
+
     free(sol);
     free(ind);
+    free(ind2);
     free(val);
-    free(obj);
+    free(val2);
+    free(lb);
     free(vtype);
     GRBfreemodel(model);
     GRBfreeenv(env);
 }
 
-int ILP(Game *game){
-    int size = game->size, flag = 0;
-    GRBenv   *env   = NULL;
-    GRBmodel *model = NULL;
-    double *sol = (double *)malloc(size * size * size * sizeof(double));
-    int    *ind = (int *)malloc(size * sizeof(int));
-    double *val = (double *)malloc(size *  sizeof(double));
-    double *obj = (double *)malloc(size* size * size * sizeof(double));
-    char   *vtype = (char *)malloc(size * size * size * sizeof(double));
-    int       optimstatus;
-    double    objval;
-
-    int error = 0, i, j, k, l, temp, cols = game->rowsInBlock, rows = game->colsInBlock;
-
-    /* Create environment - log file is sudoku.log */
-    error = GRBloadenv(&env, "sudoku.log");
-    if(error){
-        printf("ERROR %d GRBloadenv(): %s\n", error, GRBgeterrormsg(env));
-        free(sol);
-        free(ind);
-        free(val);
-        free(obj);
-        free(vtype);
-        return -1;
-    }
-
-    GRBsetintparam(env,GRB_INT_PAR_LOGTOCONSOLE,0);
-
-    /* Create an empty model named "sudoku" */
-    error = GRBnewmodel(env, &model, "sudoku", 0, NULL, NULL, NULL, NULL, NULL);
-    if (error) {
-        printf("ERROR %d GRBnewmodel(): %s\n", error, GRBgeterrormsg(env));
-        free(sol);
-        free(ind);
-        free(val);
-        free(obj);
-        free(vtype);
-        GRBfreeenv(env);
-        return 1;
-    }
-    for(i = 0; i<size*size*size; i++){
-        /*no obj init*/
-        vtype[i] = GRB_BINARY;
-    }
-    error = GRBaddvars(model, size*size*size, 0, NULL, NULL, NULL, obj, NULL, NULL, vtype, NULL);
-    if (error) {
-        printf("ERROR %d GRBaddvars(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
-    }
-    error = GRBupdatemodel(model);
-    if (error) {
-        printf("ERROR %d GRBupdatemodel(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
-    }
-
-    /*constrains for cell no 2 values for 1 cell*/
-    for(i = 0; i<size; i++){
-        for(j = 0; j<size; j++){
-            for(k = 0; k<size; k++){
-                ind[k] = i*size*size + j*size + k;
-                val[k] = 1;
+void updateSolved(double *sol, Game *game) {
+    int i, j, k, N = game->size;
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            for (k = 0; k < N; k++) {
+                if (sol[i * N * N + j * N + k] == 1) {
+                    game->solved[i][j].value = (k + 1);
+                }
             }
-            error = GRBaddconstr(model, size, ind, val, GRB_EQUAL, 1.0, NULL);
-            if (error) {
-                printf("ERROR %d 2 values for 1 cell GRBaddconstr(): %s\n", error, GRBgeterrormsg(env));
-                freeILP(sol,ind,val,obj,vtype, model, env);
-                return -1;
+        }
+    }
+}
+
+
+/* Solves sudoku using ILP
+ * res will hold the solved board values */
+int ILP(Game *game, int command) {
+
+    int N, error, i, j, v, ig, jg, count, *ind, *ind2, optimstatus, result,n = game->rowsInBlock,m = game->colsInBlock;
+    double *sol, *val, *val2, *lb, objval;
+    char *vtype;
+    GRBenv *env;
+    env = NULL;
+    GRBmodel *model = NULL;
+    N = game->size;
+    sol = (double *) malloc(N * N * N * sizeof(double));
+    ind = (int *) malloc(N * sizeof(int));
+    ind2 = (int *) malloc(N * sizeof(int));
+    val = (double *) malloc(N * sizeof(double));
+    val2 = (double *) malloc(N * sizeof(double));
+    lb = (double *) malloc(N * N * N * sizeof(double));
+    vtype = (char *) malloc(N * N * N * sizeof(char));
+
+
+    result = 0;
+    /* Create an empty model */
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            for (v = 0; v < N; v++) {
+                if (game->board[i][j].value == v + 1)
+                    lb[i * N * N + j * N + v] = 1;
+                else
+                    lb[i * N * N + j * N + v] = 0;
+                vtype[i * N * N + j * N + v] = GRB_BINARY;
+
             }
         }
     }
 
-    /* constrain that if value != 0 don't change it*/
-    for(i = 0; i<size; i++){
-        for(j = 0; j<size; j++){
-            temp = game->board[i][j].value;
-            if(temp != 0){
-                for(k = 0; k<size; k++){
-                    if(temp == k+1){
-                        ind[k] = i*size*size + j*size + k;
-                        val[k] = 1;
+    /* Create environment */
+    error = GRBloadenv(&env, "sudoku.log");
+    if (error) {
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
+    }
+
+    /* Create new model */
+    error = GRBnewmodel(env, &model, "sudoku", N * N * N, NULL, lb, NULL,
+                        vtype, NULL);
+    if (error) {
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
+    }
+
+    /* Each cell gets a value */
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            for (v = 0; v < N; v++) {
+                ind[v] = i * N * N + j * N + v;
+                val[v] = 1.0;
+            }
+            error = GRBaddconstr(model, N, ind, val, GRB_EQUAL, 1.0, NULL);
+            if (error) {
+                printf("ERROR %d GRBaddconstr1(): ALLFULL %s\n", error, GRBgeterrormsg(env));
+                freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+                return result;
+            }
+        }
+    }
+
+
+    /* constrain that if cell had value != 0
+     * it will hold the same value */
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            if (game->board[i][j].value != 0) {
+                ind2[0] = i * N * N + j * N + (game->board[i][j].value - 1);
+                val2[0] = 1;
+                error = GRBaddconstr(model, 1, ind2, val2, GRB_EQUAL, 1.0, NULL);
+                if (error) {
+                    printf("ERROR %d GRBaddconstr2():UNTOUCHED %s\n", error, GRBgeterrormsg(env));
+                    freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+                    return result;
+                }
+            }
+        }
+    }
+
+    /* Each value must appear once in each row */
+    for (v = 0; v < N; v++) {
+        for (j = 0; j < N; j++) {
+            for (i = 0; i < N; i++) {
+                ind[i] = i * N * N + j * N + v;
+                val[i] = 1.0;
+            }
+
+            error = GRBaddconstr(model, N, ind, val, GRB_EQUAL, 1.0, NULL);
+            if (error) {
+                printf("ERROR %d GRBaddconstr3(): ROW  %s\n", error, GRBgeterrormsg(env));
+                freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+                return result;
+            }
+        }
+    }
+
+    /* Each value must appear once in each column */
+    for (v = 0; v < N; v++) {
+        for (i = 0; i < N; i++) {
+            for (j = 0; j < N; j++) {
+                ind[j] = i * N * N + j * N + v;
+                val[j] = 1.0;
+            }
+
+            error = GRBaddconstr(model, N, ind, val, GRB_EQUAL, 1.0, NULL);
+            if (error) {
+                printf("ERROR %d GRBaddconstr4(): COL %s\n", error, GRBgeterrormsg(env));
+                freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+                return result;
+            }
+        }
+    }
+
+    /* Each value must appear once in each subgrid */
+    for (v = 0; v < N; v++) {
+        /*defines what block are we at*/
+        for (ig = 0; ig < n; ig++) {
+            /* number of blocks vertically (rows)*/
+            for (jg = 0; jg < m; jg++) {
+                /* number of block horizontally (cols)*/
+                count = 0;
+                /* iterates over the cells in that block*/
+                for (i = ig * m; i < (ig + 1) * m; i++) {
+                    for (j = jg * n; j < (jg + 1) * n; j++) {
+                        ind[count] = i * N * N + j * N + v;
+                        val[count] = 1.0;
+                        count++;
                     }
                 }
-                error = GRBaddconstr(model, size, ind, val, GRB_EQUAL, 1.0, NULL);
+                error = GRBaddconstr(model, N, ind, val, GRB_EQUAL, 1.0, NULL);
                 if (error) {
-                    printf("ERROR %d value should not change GRBaddconstr(): %s\n", error, GRBgeterrormsg(env));
-                    freeILP(sol,ind,val,obj,vtype, model, env);
-                    return -1;
+                    printf("ERROR %d GRBaddconstr5(): BLOCK  %s\n", error, GRBgeterrormsg(env));
+                    freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+                    return result;
                 }
             }
         }
     }
 
-    /* row constrains */
-    for(i =0; i<size; i++){
-        for(k=0; k<size; k++){
-            for(j=0; j<size; j++){
-                ind[j] = i*size*size + j*size + k;
-                val[j] = 1;
-            }
-            error = GRBaddconstr(model, size, ind, val, GRB_EQUAL, 1.0, NULL);
-            if (error) {
-                printf("ERROR %d row GRBaddconstr(): %s\n", error, GRBgeterrormsg(env));
-                freeILP(sol,ind,val,obj,vtype, model, env);
-                return -1;
-            }
-        }
-    }
-
-    /* col constrains */
-    for(j = 0; j<size; j++){
-        for(k=0; j<size; j++){
-            for(i=0; i<size; i++){
-                ind[i] = i*size*size + j*size + k;
-                val[i]=1;
-            }
-            error = GRBaddconstr(model, size, ind, val, GRB_EQUAL, 1.0, NULL);
-            if (error) {
-                printf("ERROR %d col GRBaddconstr(): %s\n", error, GRBgeterrormsg(env));
-                freeILP(sol,ind,val,obj,vtype, model, env);
-                return -1;
-            }
-        }
-    }
-
-    /*block constrains - creating block grid*/
-    for(i = 0; i<rows; i++){
-        for(j = 0; j<cols; j++){
-            temp = 0;
-            for(k = 0; k<game->rowsInBlock; k++){
-                for(l = 0; l<game->colsInBlock; l++){
-                    ind[temp] = i*game->rowsInBlock + k;
-                    val[temp] = 1;
-                    temp++;
-                }
-            }
-            error = GRBaddconstr(model, size, ind, val, GRB_EQUAL, 1.0, NULL);
-            if (error) {
-                printf("ERROR %d block GRBaddconstr(): %s\n", error, GRBgeterrormsg(env));
-                freeILP(sol,ind,val,obj,vtype, model, env);
-                return -1;
-            }
-        }
-    }
-
-    /* Optimize model - need to call this before calculation */
+    /* Optimize model */
     error = GRBoptimize(model);
     if (error) {
-        printf("ERROR %d GRBoptimize(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
     }
 
-    /* Write model to 'sudoku.lp' - this is not necessary but very helpful */
+    /* Write model to 'sudoku.lp' */
     error = GRBwrite(model, "sudoku.lp");
     if (error) {
-        printf("ERROR %d GRBwrite(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
     }
 
-    /* Get solution information */
+    /* Capture solution information */
     error = GRBgetintattr(model, GRB_INT_ATTR_STATUS, &optimstatus);
     if (error) {
-        printf("ERROR %d GRBgetintattr(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
     }
 
     /* get the objective -- the optimal result of the function */
     error = GRBgetdblattr(model, GRB_DBL_ATTR_OBJVAL, &objval);
     if (error) {
-        printf("ERROR %d GRBgettdblattr(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
     }
 
     /* get the solution - the assignment to each variable */
-    error = GRBgetdblattrarray(model, GRB_DBL_ATTR_X, 0, size*size*size, sol);
+    error = GRBgetdblattrarray(model, GRB_DBL_ATTR_X, 0, N * N * N, sol);
     if (error) {
-        printf("ERROR %d GRBgetdblattrarray(): %s\n", error, GRBgeterrormsg(env));
-        freeILP(sol,ind,val,obj,vtype, model, env);
-        return -1;
+        printf("ERROR: %s\n", GRBgeterrormsg(env));
+        freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+        return result;
     }
 
-    /* if there is a solution, update the board */
-    if(optimstatus == GRB_OPTIMAL){
-        updateSolved(game, sol);
-        flag = 1;
+    /* board is solved */
+    if (optimstatus == GRB_OPTIMAL) {
+        if (command) {
+            updateSolved(sol, game);
+        }
+        result = 1;
     }
 
-    freeILP(sol,ind,val,obj,vtype, model, env);
-    return flag;
+    freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
+
+    return result;
 }
+
+
+
+
+
+/*
+int **fromCellMatToIntMat(cell ***src, int N) {
+
+    int **dst, i, j;
+    dst = allocateIntMatrix(N);
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            dst[i][j] = src[i][j]->value;
+        }
+    }
+
+    return dst;
+}
+
+
+cell ***fromIntMatToCellMat(int **src, int N) {
+
+    int i, j;
+    cell ***dst;
+    dst = allocateCellMatrix(N);
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+
+            dst[i][j]->value = src[i][j];
+        }
+    }
+
+    return dst;
+}
+*/
+
