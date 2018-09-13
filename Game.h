@@ -39,7 +39,7 @@ int generateHelp(Game *game,int x);
 int generate(Game *game, int x, int y);
 int undoHelp(Game *game,int reset);
 int undo(Game *game, int show,int reset);
-int redoHelp(Game *game);
+int redoHelp(Game *game, int dontShow);
 int redo(Game *game);
 int saveToFile(Game *game,char *fileName);
 int save(Game *game, char *fileName);

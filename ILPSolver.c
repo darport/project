@@ -39,7 +39,7 @@ void updateSolved(double *sol, Game *game) {
  * res will hold the solved board values */
 int ILP(Game *game, int command) {
 
-    int N, error, i, j, v, ig, jg, count, *ind, *ind2, optimstatus, result,n = game->rowsInBlock,m = game->colsInBlock;
+    int N, error, i, j, v, ig, jg, count, *ind, *ind2, optimstatus, result,m = game->rowsInBlock,n = game->colsInBlock;
     double *sol, *val, *val2, *lb, objval;
     char *vtype;
     GRBenv *env;
@@ -223,7 +223,7 @@ int ILP(Game *game, int command) {
 
     /* board is solved */
     if (optimstatus == GRB_OPTIMAL) {
-        if (command) {
+        if (command == 1) {
             updateSolved(sol, game);
         }
         result = 1;

@@ -265,7 +265,6 @@ int validate(Game *game){
 
 
 int set(Game *game, int x, int y, int z,int show,int type){
-    /*Node *temp;*/
 	Link *temp;
     int mark;
     temp = (Link *)malloc(sizeof(Link));
@@ -278,7 +277,10 @@ int set(Game *game, int x, int y, int z,int show,int type){
         return 0;
     }
     if(game->board[x][y].value == z){
-    	return 0;
+    	if(show){
+    		printBoard(game);
+    	}
+    	return 1;
     }
     /* clearing any move beyond the current move from the undo-redo list */
 
@@ -306,6 +308,9 @@ int set(Game *game, int x, int y, int z,int show,int type){
     mark = !isValid(game,x,y,z,1);
     game->board[x][y].value = z;
     game->board[x][y].marked = mark;
+    if(type){
+    	printf("Cell <%d,%d> set to %d\n",y+1,x+1,z);
+    }
     /* updating erroneous cells and printing the board */
     updateErroneous(game);
     if(show){
@@ -360,13 +365,13 @@ int undoHelp(Game *game, int reset){
    		return flag;
    	}
    	if(curr != 0 && z != 0){
-   		printf("Undo %d,%d: from %d to %d\n", x + 1, y + 1,curr, z);
+   		printf("Undo %d,%d: from %d to %d\n", y + 1, x + 1,curr, z);
 	}
    	else if(curr == 0 && z!= 0){
-   		printf("Undo %d,%d: from _to %d\n", x + 1, y + 1,z);
+   		printf("Undo %d,%d: from _to %d\n", y + 1, x + 1,z);
    	}
    	else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0 */
-   		printf("Undo %d,%d: from %d to _\n", x + 1, y + 1,curr);
+   		printf("Undo %d,%d: from %d to _\n", y + 1, x + 1,curr);
    	}
    	return flag;
 }
@@ -389,13 +394,19 @@ int undo(Game *game, int show, int reset){
     while(game->ops->head->prev != NULL){
     	game->ops->head = game->ops->head->prev;
     }
+    while(undoHelp(game,1)){}
+    if(show){
+    	printBoard(game);
+    }
+    while(game->ops->head->prev != NULL){
+    	game->ops->head = game->ops->head->prev;
+    }
     while(undoHelp(game,reset)){}
     while(game->ops->head->prev != NULL){
     	game->ops->head = game->ops->head->prev;
     }
     game->ops = game->ops->prev;
 
-    if(show){printBoard(game);}
     return 1;
    /*
     do{
@@ -410,18 +421,18 @@ int undo(Game *game, int show, int reset){
     	curr = game->ops->currZ;
     	game->ops = game->ops->prev;
     	updateErroneous(game);
-    	/*curr = game->ops->currZ; moved up 8 lines*/
-    	/*if(curr != 0 && z != 0){
+    	curr = game->ops->currZ; moved up 8 lines
+    	if(curr != 0 && z != 0){
     		printf("Undo %d,%d: from %d to %d\n", x + 1, y + 1,curr, z);
     	}
     	else if(curr == 0 && z!= 0){
     		printf("Undo %d,%d: from _to %d\n", x + 1, y + 1,z);
        		}
-        	else if(curr!=0){ /* in this case z == 0 because the first condition was curr != 0 && z != 0
+        	else if(curr!=0){ in this case z == 0 because the first condition was curr != 0 && z != 0
         		printf("Undo %d,%d: from %d to _\n", x + 1, y + 1,curr);
         		}
-        /*else both 0 check */
-   /* }while(type && typePrev);
+        else both 0 check
+    }while(type && typePrev);
   	printBoard(game);
     return 1;*/
 }
@@ -513,7 +524,7 @@ int generate(Game *game, int x, int y){
 
 
 
-int redoHelp(Game *game){
+int redoHelp(Game *game,int dontShow){
 	int x,y,z, prev, flag = 1;
 	/*game->ops->head = game->ops->head->next;*/
 	x = game->ops->head->x;
@@ -522,14 +533,16 @@ int redoHelp(Game *game){
 	game->board[x][y].value = z;
 	prev = game->ops->head->prevZ;
 	updateErroneous(game);
-	if(prev != 0 && z != 0){
-		printf(	"Redo %d,%d: from %d to %d\n", x + 1, y + 1,prev, z);
-	}
-	else if(prev == 0 && z!= 0){
-		printf("Redo %d,%d: from _to %d\n", x + 1, y + 1,z);
-	}
-	else if(prev != 0){  /*in this case z == 0 because the first condition was curr != 0 && z != 0*/
-		printf("Redo %d,%d: from %d to _\n", x + 1, y + 1,prev);
+	if(!dontShow){
+		if(prev != 0 && z != 0){
+			printf(	"Redo %d,%d: from %d to %d\n", y + 1, x + 1,prev, z);
+		}
+		else if(prev == 0 && z!= 0){
+			printf("Redo %d,%d: from _to %d\n", y + 1, x + 1,z);
+		}
+		else if(prev != 0){  /*in this case z == 0 because the first condition was curr != 0 && z != 0*/
+			printf("Redo %d,%d: from %d to _\n", y + 1, x + 1,prev);
+		}
 	}
 	if(game->ops->head->next != NULL){
 		game->ops->head = game->ops->head->next;
@@ -544,45 +557,14 @@ int redo(Game *game){
     	printf("Error: no moves to redo\n");
     	return 0;
     }
-
     game->ops = game->ops->next;
-    while(redoHelp(game)){}
-
+    while(redoHelp(game, 1)){}
     printBoard(game);
+    while(game->ops->head->prev != NULL){
+		game->ops->head = game->ops->head->prev;
+    }
+    while(redoHelp(game, 0)){}
     return 1;
-
-
-    /*do{
-    	if(game->ops->next == NULL){
-    		break;
-    	}
-    	game->ops = game->ops->next;
-    	type = game->ops->type;
-
-    	x = game->ops->x;
-    	y = game->ops->y;
-    	z = game->ops->currZ;
-    	game->board[x][y].value = z;
-    	prev = game->ops->prevZ;
-    	updateErroneous(game);
-    	if(prev != 0 && z != 0){
-    		printf(""
-    				""
-    				"Redo %d,%d: from %d to %d\n", x + 1, y + 1,prev, z);
-    	}
-    	else if(prev == 0 && z!= 0){
-    		printf("Redo %d,%d: from _to %d\n", x + 1, y + 1,z);
-    	}
-    	else if(prev != 0){  in this case z == 0 because the first condition was curr != 0 && z != 0
-    		printf("Redo %d,%d: from %d to _\n", x + 1, y + 1,prev);
-    	}
-    	if(game->ops->next != NULL){
-    		typeNext = game->ops->next->type;
-    	}
-    }while(type && typeNext); */
-    /*else both 0 check
-    printBoard(game);
-    return 1; */
 }
 
 

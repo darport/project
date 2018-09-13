@@ -21,8 +21,9 @@ int main(){
 
 	printf("Sudoku\n------\n");
 	fflush(stdout);
-
+	printf("Enter your command:\n");
 	while(getCommand(game) != -1){
+		printf("Enter your command:\n");
 		fflush(stdout);
 	}
 

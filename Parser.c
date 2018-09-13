@@ -29,6 +29,7 @@ int isInt(char *num){
 			return -1;
 		j++;
 	}
+
 	return atoi(num);
 }
 
@@ -90,8 +91,9 @@ int callSet (Game *game){
 		x = isInt(params[0]);
 		y = isInt(params[1]);
 		z = isInt(params[2]);
+
 		if(inRange(game, x) && inRange(game, y) && (inRange(game, z) || z == 0)){
-			return set(game, x-1, y-1, z, 1, 0); /* i added the '-1' so it will suit our presentation of the board*/
+			return set(game, y-1, x-1, z, 1, 0); /* i added the '-1' so it will suit our presentation of the board*/
 		}
 		printf("Error: value not in range 0-%d\n", game->colsInBlock*game->rowsInBlock);
 		return 0;
@@ -99,7 +101,7 @@ int callSet (Game *game){
 	return printInvalid();
 }
 int inRangeGen(Game *game, int num){
-	if(num < 1 || num >(game->size*game->size)){
+	if(num < 0 || num >(game->size*game->size)){
 		return 0;
 	}
 	return 1;
@@ -145,7 +147,7 @@ int callHint(Game *game){
 		x = isInt(params[0]);
 		y = isInt(params[1]);
 		if(inRange(game, x) && inRange(game, y)){
-			return hint(game, x, y);
+			return hint(game, y - 1, x - 1);
 		}
 		printf("Error: value not in range 1-%d\n", game->colsInBlock*game->rowsInBlock);
 		return 0;
@@ -157,7 +159,7 @@ int getCommand(Game *game){
 	int charRead;
 	static char cmd[257];
 	char *commandType;
-	charRead = strlen(fgets(cmd,258,stdin)) -1 ;/*check the numbes*/
+	charRead = strlen(fgets(cmd,258,stdin)) ;/*check the numbes*/
 	if( charRead > 256){
 		return printInvalid();
 	}
