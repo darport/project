@@ -4,16 +4,14 @@
 #include "LinkedList.h"
 
 
-void boardCopy(Game *game){
+/* void boardCopy(Game *game){
 	int i,j;
 	for(i = 0;i <game->size; i++){
 		for(j = 0; j<game->size; j++){
 			game->solved[i][j].value = game->board[i][j].value;
 		}
 	}
-}
-
-
+} */
 
 void freeBoard(Cell **temp,int size){
 	int i;
