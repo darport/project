@@ -1,8 +1,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "Game.h"
+#include "LinkedList.h"
 
 
+void boardCopy(Game *game){
+	int i,j;
+	for(i = 0;i <game->size; i++){
+		for(j = 0; j<game->size; j++){
+			game->solved[i][j].value = game->board[i][j].value;
+		}
+	}
+}
+
+
+
+void freeBoard(Cell **temp,int size){
+	int i;
+	for(i = 0; i < size; i++){
+		free(temp[i]);
+	}
+	free(temp);
+	temp = NULL;
+}
 void initializeOps(Game *game){
 	game->ops->next = NULL;
 	game->ops->prev = NULL;
@@ -14,6 +34,7 @@ void initializeOps(Game *game){
 	game->ops->head->next = NULL;
 	game->ops->head->prev = NULL;
 }
+
 
 
 void cleanBoard(Game * game){
@@ -28,27 +49,23 @@ void cleanBoard(Game * game){
 }
 
 void freeGame(Game *game){
-	int i;
 	if(game->board != NULL){
-		for(i = 0; i < game->size; i++){
-			free(game->board[i]);
-		}
-		free(game->board);
-		game->board = NULL;
+		freeBoard(game->board,game->size);
 	}
 	if(game->solved != NULL){
-		for(i = 0; i < game->size; i++){
-			free(game->solved[i]);
-		}
-		free(game->solved);
-		game->solved = NULL;
+		freeBoard(game->solved,game->size);
 	}
 
 	if(game->ops != NULL){
+        while(game->ops->prev != NULL){
+        	game->ops = game->ops->prev;
+        }
 		freeList(game->ops);
 		game->ops = NULL;
 	}
-	/*free(game); for unknown reason this line terminates the program */
+	if(game != NULL){
+	    free(game);
+	}
 }
 
 int memoryError(){
@@ -214,3 +231,8 @@ void setChanges(Game *game){
 		free(temp);
 	}
 }
+
+
+
+
+

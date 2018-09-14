@@ -9,7 +9,6 @@
 
 void freeILP(double *sol, int *ind, int *ind2, double *val, double *val2, double *lb, char *vtype, GRBenv *env,
              GRBmodel *model) {
-
     free(sol);
     free(ind);
     free(ind2);
@@ -43,8 +42,8 @@ int ILP(Game *game, int command) {
     double *sol, *val, *val2, *lb, objval;
     char *vtype;
     GRBenv *env;
-    env = NULL;
     GRBmodel *model = NULL;
+    env = NULL;
     N = game->size;
     sol = (double *) malloc(N * N * N * sizeof(double));
     ind = (int *) malloc(N * sizeof(int));
@@ -53,7 +52,6 @@ int ILP(Game *game, int command) {
     val2 = (double *) malloc(N * sizeof(double));
     lb = (double *) malloc(N * N * N * sizeof(double));
     vtype = (char *) malloc(N * N * N * sizeof(char));
-
 
     result = 0;
     /* Create an empty model */
@@ -86,7 +84,6 @@ int ILP(Game *game, int command) {
         freeILP(sol, ind, ind2, val, val2, lb, vtype, env, model);
         return result;
     }
-
     /* Each cell gets a value */
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {

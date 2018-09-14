@@ -5,10 +5,11 @@
 #include "Stack.h"
 
 int push(Stack *stk, int val){
+    Elem *p;
     if(stk == NULL){
         return INT_MIN;
     }
-	Elem *p;
+
 	p = (Elem *)malloc(sizeof(Elem));
 	if(p == NULL){
 		memoryError();
@@ -22,11 +23,12 @@ int push(Stack *stk, int val){
 }
 
 int pop(Stack *stk){
+    Elem *p;
+    int val;
     if(stk == NULL){
         return INT_MIN;
     }
-	int val;
-	Elem *p;
+
 	val = stk->top->val;
 	p = stk->top;
 	stk->top = stk->top->next;

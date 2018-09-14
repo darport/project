@@ -22,7 +22,7 @@ typedef struct game_t{
 	int size;
 } Game;
 
-void resetOps(Game *game);
+int resetOps(Game *game);
 int isFull(Game *game);
 void setData(Game *game, char *data, int i, int j);
 int openFile(Game *game, char *fileName);

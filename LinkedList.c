@@ -16,6 +16,9 @@ void freeList(Link *head){
 		freeList(head->next);
 	}
 	if(head->head != NULL){
+        while(head->head->prev != NULL){
+            head->head = head->head->prev;
+        }
 		freeListNode(head->head);
 	}
 	free(head);

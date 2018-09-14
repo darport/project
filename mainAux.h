@@ -3,7 +3,8 @@
 #ifndef MAINAUX_H_
 #define MAINAUX_H_
 
-
+void boardCopy(Game *game);
+void freeBoard(Cell **temp,int size);
 void initializeOps(Game *game);
 void cleanBoard(Game * game);
 void freeGame(Game *game);
@@ -19,5 +20,6 @@ void updateErroneous(Game *game);
 int options(Game *game ,int i, int j);
 void markChanges(Game *game);
 void setChanges(Game *game);
+
 
 #endif /* MAINAUX_H_ */

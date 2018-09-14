@@ -10,7 +10,7 @@ $(EXEC): $(OBJS)
 	$(CC) $(OBJS)  $(GUROBI_LIB) -o $@ 
 main.o: Game.h Parser.h mainAux.h  
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c
-Game.o: Game.h Solver.h ILPSolver.h mainAux.h LinkedList.h
+Game.o: Game.h Solver.h ILPSolver.h MainAux.h LinkedList.h
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c
 Parser.o: Game.h 
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c

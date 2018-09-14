@@ -23,8 +23,8 @@ int printInvalid(){
 
 int isInt(char *num){
 	int j = 0, numLen;
-	numLen = (int)strlen(num) - 1;
-	while(j<numLen ){
+	numLen = (int)strlen(num);
+	while(j < numLen ){
 		if(!isdigit(num[j]))
 			return -1;
 		j++;
@@ -118,9 +118,14 @@ int callGenerate (Game *game){
 		x = isInt(params[0]);
 		y = isInt(params[1]);
 		if(inRangeGen(game,x)  && inRangeGen(game, y)){
-			return generate(game, x, y);
+			if(isEmpty(game)){
+				return generate(game,x,y);
+			}
+			printf("Error: board is not empty\n");
+			return 0;
+			/*return generate(game, x, y);*/
 		}
-		printf("Error: value not in range 0-%d\n", game->colsInBlock*game->rowsInBlock);
+		printf("Error: value not in range 0-%d\n", game->size*game->size);
 		return 0;
 	}
 	return printInvalid();
@@ -156,11 +161,19 @@ int callHint(Game *game){
 }
 
 int getCommand(Game *game){
-	int charRead;
+	int i,charRead;
 	static char cmd[257];
 	char *commandType;
-	charRead = strlen(fgets(cmd,258,stdin)) ;/*check the numbes*/
+	char x;
+	for(i = 0; i<257; i++){
+		cmd[i] = '0';
+	}
+	charRead = (int)strlen(fgets(cmd,258,stdin)) ;/*check the numbes*/
 	if( charRead > 256){
+		x = (char)getchar();
+		while(x != '\n' && x != EOF){
+			x = (char)getchar();
+		}
 		return printInvalid();
 	}
 	commandType = strtok(cmd," \t\r\n");
@@ -222,11 +235,13 @@ int getCommand(Game *game){
 	/* available in edit mode */
 	if(game->mode == 2){
 		if(strcmp(commandType,"generate") ==0){
+			return callGenerate(game);
+			/*
 			if(isEmpty(game)){
 				return callGenerate(game);
 			}
 			printf("Error: board is not empty\n");
-			return 0;
+			return 0;*/
 		}
 	}
 	return printInvalid();

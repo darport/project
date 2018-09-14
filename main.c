@@ -27,7 +27,6 @@ int main(){
 		fflush(stdout);
 	}
 
-
 	return 1;
 }
 
