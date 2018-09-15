@@ -1,19 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "mainAux.h"
+#include "ErrorHandler.h"
 #include "Stack.h"
 
 int push(Stack *stk, int val){
     Elem *p;
-    if(stk == NULL){
-        return INT_MIN;
-    }
-
 	p = (Elem *)malloc(sizeof(Elem));
 	if(p == NULL){
-		memoryError();
-		return INT_MIN;
+		return memoryError();
 	}
 	p->val = val;
 	p->next = stk->top;
@@ -25,9 +20,7 @@ int push(Stack *stk, int val){
 int pop(Stack *stk){
     Elem *p;
     int val;
-    if(stk == NULL){
-        return INT_MIN;
-    }
+
 
 	val = stk->top->val;
 	p = stk->top;
@@ -38,16 +31,11 @@ int pop(Stack *stk){
 }
 
 int top(Stack *stk){
-    if(stk == NULL){
-        return INT_MIN;
-    }
+
 	return stk->top->val;
 }
 
 int initialize(Stack *stk){
-    if(stk == NULL){
-        return memoryError();
-    }
 	stk->size = 0;
 	stk->top = NULL;
 	return 1;

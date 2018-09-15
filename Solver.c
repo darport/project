@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "Game.h"
 #include "MainAux.h"
+#include "ErrorHandler.h"
 #include "Stack.h"
 
 void updateIndexForward(int *row, int *col, Game *game){
@@ -77,6 +78,9 @@ int eBacktracking(Game *game){
     int **copy;
     copy = copyBoard(game->board, game->size);
     stk = (Stack *)malloc(sizeof(Stack));
+    if(stk == NULL){
+        return memoryError();
+    }
     initialize(stk);
     while(!(row == -1 && col == game->size -1)){
         if(row == game->size){

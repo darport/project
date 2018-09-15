@@ -2,16 +2,7 @@
 #include <stdio.h>
 #include "Game.h"
 #include "LinkedList.h"
-
-
-/* void boardCopy(Game *game){
-	int i,j;
-	for(i = 0;i <game->size; i++){
-		for(j = 0; j<game->size; j++){
-			game->solved[i][j].value = game->board[i][j].value;
-		}
-	}
-} */
+#include "ErrorHandler.h"
 
 void freeBoard(Cell **temp,int size){
 	int i;
@@ -19,21 +10,37 @@ void freeBoard(Cell **temp,int size){
 		free(temp[i]);
 	}
 	free(temp);
-	temp = NULL;
 }
+
+void initCell(Game *game, int i, int j){
+	game->board[i][j].value = 0;
+	game->board[i][j].fixed = 0;
+	game->board[i][j].marked = 0;
+	game->board[i][j].needChange = 0;
+	game->board[i][j].valChange = 0;
+	game->solved[i][j].value = 0;
+	game->solved[i][j].fixed = 0;
+	game->solved[i][j].marked = 0;
+	game->solved[i][j].needChange = 0;
+	game->solved[i][j].valChange = 0;
+}
+
+void initNode(Node *head){
+    head->x = 0;
+    head->y = 0;
+    head->currZ = 0;
+    head->prevZ = 0;
+    head->type = 0;
+    head->next = NULL;
+    head->prev = NULL;
+}
+
+
 void initializeOps(Game *game){
 	game->ops->next = NULL;
 	game->ops->prev = NULL;
-	game->ops->head->x = 0;
-	game->ops->head->y = 0;
-	game->ops->head->currZ = 0;
-	game->ops->head->prevZ = 0;
-	game->ops->head->type = 0;
-	game->ops->head->next = NULL;
-	game->ops->head->prev = NULL;
+	initNode(game->ops->head);
 }
-
-
 
 void cleanBoard(Game * game){
 	int i, j;
@@ -64,21 +71,6 @@ void freeGame(Game *game){
 	if(game != NULL){
 	    free(game);
 	}
-}
-
-int memoryError(){
-	printf("memory allocation error\n");
-	return 0;
-}
-
-int fileError(){
-	printf("closing file error\n");
-	return 0;
-}
-
-int erroneous(){
-	printf("Error: board contains erroneous values\n");
-	return 0;
 }
 
 int isErroneous(Game *game){
@@ -203,10 +195,13 @@ void markChanges(Game *game){
 	}
 }
 
-void setChanges(Game *game){
+int setChanges(Game *game){
 	int i,j, flag = 0;
 	Link *temp;
 	Link *new = (Link*)malloc(sizeof(Link));
+	if(new == NULL){
+		return memoryError();
+	}
 	new->head = NULL;
 	new->next = NULL;
 	new->prev = game->ops;
@@ -228,6 +223,7 @@ void setChanges(Game *game){
 		game->ops->next = NULL;
 		free(temp);
 	}
+	return 1;
 }
 
 

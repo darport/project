@@ -4,8 +4,8 @@
 #include "Solver.h"
 #include "ILPSolver.h"
 #include "MainAux.h"
+#include "ErrorHandler.h"
 #include "LinkedList.h"
-
 
 int resetOps(Game *game){
 	Link *newLink = (Link*)malloc(sizeof(Link));
@@ -14,6 +14,9 @@ int resetOps(Game *game){
         return memoryError();
     }
     newLink->head = (Node*)malloc(sizeof(Node));
+    if(newLink->head == NULL){
+        return memoryError();
+    }
 	game->ops = newLink;
 	initializeOps(game);
 	while(temp->prev != NULL){
@@ -59,14 +62,22 @@ void setData(Game *game, char *data, int i, int j){
     game->board[i][j].value = value;
 }
 
-int openFile(Game *game, char *fileName){ /*instead of initializing cell** and then assigning, i immediately assigned to game->board and solved,
+int openFile(Game *game, char *fileName, int mode){ /*instead of initializing cell** and then assigning, i immediately assigned to game->board and solved,
  	 	 	 	 	 	 	 	 	 	 	 data * changed to data[2]*/
     int i,j,m,n,size;
     char data[3];
+    Cell **temp;
     FILE *fp = fopen(fileName, "r");
     if(fp == NULL){
-        printf("Error: File doesn't exist or cannot be opened\n");
-        return 0;
+        return openFileError(mode);
+    }
+    if(game->board != NULL){
+        temp = game->board;
+        freeBoard(temp,game->size);
+    }
+    if(game->solved != NULL){
+        temp = game->solved;
+        freeBoard(temp,game->size);
     }
 
     if(game)
@@ -100,16 +111,7 @@ int openFile(Game *game, char *fileName){ /*instead of initializing cell** and t
 
     for(i = 0; i<size; i++){
         for(j = 0; j<size; j++){
-        	game->board[i][j].value = 0;
-        	game->board[i][j].fixed = 0;
-        	game->board[i][j].marked = 0;
-        	game->board[i][j].needChange = 0;
-        	game->board[i][j].valChange = 0;
-        	game->solved[i][j].value = 0;
-        	game->solved[i][j].fixed = 0;
-           	game->solved[i][j].marked = 0;
-           	game->solved[i][j].needChange = 0;
-           	game->solved[i][j].valChange = 0;
+        	initCell(game, i, j);
             fscanf(fp,"%s",data);
             setData(game,data,i,j);
         }
@@ -145,16 +147,7 @@ int openEmpty(Game *game){    /*instead of initializing cell** and then assignin
     /* check if we need to initialize the fields to 0 */
     for(i = 0; i < game->size; i++){
         for(j = 0; j< game->size; j++){
-        	game->board[i][j].value = 0;
-           	game->board[i][j].fixed = 0;
-           	game->board[i][j].marked = 0;
-          	game->board[i][j].needChange = 0;
-          	game->board[i][j].valChange = 0;
-           	game->solved[i][j].value = 0;
-           	game->solved[i][j].fixed = 0;
-          	game->solved[i][j].marked = 0;
-           	game->solved[i][j].needChange = 0;
-           	game->solved[i][j].valChange = 0;
+            initCell(game, i, j);
         }
     }
     return 1;
@@ -216,17 +209,17 @@ int printBoard(Game *game) {
 
 int solve(Game *game, char *fileName){
 	int success;
-	Cell **temp;
+	/*Cell **temp;*/
     /*free prev boards if needed*/
-    if(game->board != NULL){
+    /*if(game->board != NULL){
         temp = game->board;
         freeBoard(temp,game->size);
     }
     if(game->solved != NULL){
         temp = game->solved;
         freeBoard(temp,game->size);
-    }
-	success = openFile(game,fileName);
+    }*/
+	success = openFile(game,fileName, 1);
 
 	if(success == 1){
 		if(resetOps(game) == 0){
@@ -244,15 +237,16 @@ int edit(Game *game, char *x){
 	int success;
 	Cell **temp;
     /*free prev boards if needed*/
-    if(game->board != NULL){
-        temp = game->board;
-        freeBoard(temp,game->size);
-    }
-    if(game->solved != NULL){
-        temp = game->solved;
-        freeBoard(temp,game->size);
-    }
+
 	if(x == NULL){
+        if(game->board != NULL){
+            temp = game->board;
+            freeBoard(temp,game->size);
+        }
+        if(game->solved != NULL){
+            temp = game->solved;
+            freeBoard(temp,game->size);
+        }
 		game->mode = 2;
 		game->size = 9;
 		game->colsInBlock = 3;
@@ -262,7 +256,7 @@ int edit(Game *game, char *x){
         printBoard(game);
         return success;
 	}
-	success = openFile(game,x);
+	success = openFile(game,x,2);
 	if(success == 1){
 		resetOps(game);
 		game->mode = 2;
@@ -310,7 +304,7 @@ int validate(Game *game){
 int set(Game *game, int x, int y, int z,int show,int type){
     int mark;
     /* checking if the cell is fixed */
-    if(game->board[x][y].fixed && game->mode != 2){ /*needs to be checked!!!!*/
+    if(game->board[x][y].fixed && game->mode != 2){
         printf("Error: cell is fixed\n");
         return 0;
     }
@@ -355,7 +349,7 @@ int set(Game *game, int x, int y, int z,int show,int type){
         	if(!show){
         		printBoard(game);
         	}
-            if(validate(game)){
+            if(!isErroneous(game)){
                 printf("Puzzle solved successfully\n");
                 game->mode = 0;
             }
@@ -477,6 +471,14 @@ int generateHelp(Game *game, int x){
 int generate(Game *game, int x, int y){
     int i, row, col, temp;
    	Link *new = (Link*)malloc(sizeof(Link));
+   	if(new == NULL){
+   	    return memoryError();
+   	}
+   	if(y == 0){
+   	    free(new);
+   	    printBoard(game);
+   	    return 0;
+   	}
    	new->head = NULL;
    	new->next = NULL;
    	new->prev = game->ops;
@@ -586,14 +588,27 @@ int saveToFile(Game *game,char *fileName){
     for(i=0; i<game->size; i++){
         for(j=0; j<game->size; j++){
             if(game->board[i][j].fixed || game->mode == 2){
-                fprintf(fp,"%d. ", game->board[i][j].value);
+                if(game->board[i][j].value == 0){
+                    if(fprintf(fp,"%d ",game->board[i][j].value) < 0){
+                        return fileWriteError();
+                    }
+                }
+                else{
+                    if(fprintf(fp,"%d. ", game->board[i][j].value) < 0){
+                        return fileWriteError();
+                    }
+                }
             }
             else{
                 if(game->board[i][j].marked){
-                    fprintf(fp,"%d* ", game->board[i][j].value);
+                    if(fprintf(fp,"%d* ", game->board[i][j].value) < 0){
+                        return fileWriteError();
+                    }
                 }
                 else{
-                    fprintf(fp,"%d ", game->board[i][j].value);
+                    if(fprintf(fp,"%d ", game->board[i][j].value) < 0 ){
+                        return fileWriteError();
+                    }
                 }
             }
         }
@@ -601,7 +616,7 @@ int saveToFile(Game *game,char *fileName){
     }
     printf("Saved to: %s\n", fileName);
     if(fclose(fp) == EOF){
-        fileError();
+        closeFileError();
     }
     return 1;
 }
@@ -613,7 +628,7 @@ int save(Game *game, char *fileName){
             return erroneous();
         }
         else{
-            check = validate(game);
+            check = ILP(game,0);
         	/*check = 1;*/
             if(!check){
                 printf("Error: board validation failed\n");
@@ -667,7 +682,9 @@ int autofill(Game *game){
         return erroneous();
     }
     markChanges(game);
-    setChanges(game);
+    if(setChanges(game) == -1){
+        return -1;
+    }
     if(!isFull(game)){
     	printBoard(game);
     }
@@ -693,9 +710,8 @@ int reset(Game *game){
     return 1;
 }
 
-int exitGame(Game *game){
+int exitGame(){
     printf("Exiting...\n");
-    freeGame(game);
     return -1;
 }
 

@@ -25,7 +25,7 @@ typedef struct game_t{
 int resetOps(Game *game);
 int isFull(Game *game);
 void setData(Game *game, char *data, int i, int j);
-int openFile(Game *game, char *fileName);
+int openFile(Game *game, char *fileName, int mode);
 int openEmpty(Game *game);
 int solve(Game *game, char *fileName);
 int edit(Game *game, char *fileName);
@@ -47,5 +47,5 @@ int hint(Game *game, int x, int y);
 int numSolutions(Game *game);
 int autofill(Game *game);
 int reset(Game *game);
-int exitGame(Game *game);
+int exitGame();
 #endif /* GAME_H_ */

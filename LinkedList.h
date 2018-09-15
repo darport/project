@@ -19,6 +19,6 @@ typedef struct list_t{
 
 void freeListNode(Node *head);
 void freeList(Link *head);
-void addNode(Node **lst, int x, int y, int currZ, int prevZ, int type);
-void addLink(Link **lst, int x, int y, int currZ, int prevZ, int type);
+int addNode(Node **lst, int x, int y, int currZ, int prevZ, int type);
+int addLink(Link **lst, int x, int y, int currZ, int prevZ, int type);
 #endif /* LINKEDLIST_H_ */

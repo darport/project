@@ -168,7 +168,10 @@ int getCommand(Game *game){
 	for(i = 0; i<257; i++){
 		cmd[i] = '0';
 	}
-	charRead = (int)strlen(fgets(cmd,258,stdin)) ;/*check the numbes*/
+	if(fgets(cmd,258,stdin) == 0){
+		return exitGame(game);
+	}
+	charRead = (int)strlen(cmd) ;
 	if( charRead > 256){
 		x = (char)getchar();
 		while(x != '\n' && x != EOF){
@@ -190,7 +193,6 @@ int getCommand(Game *game){
 	if(strcmp(commandType,"exit") == 0){
 		return exitGame(game);
 	}
-
 	/* available in solve and edit mode */
 	if(game->mode == 1 || game->mode == 2){
 		if(strcmp(commandType,"validate") ==0){
@@ -218,7 +220,6 @@ int getCommand(Game *game){
 			return reset(game);
 		}
 	}
-
 	/* available in solve mode */
 	if(game->mode == 1){
 		if(strcmp(commandType,"mark_errors") ==0){
@@ -231,17 +232,10 @@ int getCommand(Game *game){
 			return autofill(game);
 		}
 	}
-
 	/* available in edit mode */
 	if(game->mode == 2){
 		if(strcmp(commandType,"generate") ==0){
 			return callGenerate(game);
-			/*
-			if(isEmpty(game)){
-				return callGenerate(game);
-			}
-			printf("Error: board is not empty\n");
-			return 0;*/
 		}
 	}
 	return printInvalid();
