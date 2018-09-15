@@ -13,7 +13,7 @@ main.o: Game.h Parser.h ErrorHandler.h MainAux.h
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c
 Game.o: Game.h Solver.h ILPSolver.h ErrorHandler.h MainAux.h LinkedList.h
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c
-Parser.o: Game.h 
+Parser.o: Game.h MainAux.h
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c
 Solver.o:  Game.h Stack.h ErrorHandler.h MainAux.h
 	$(CC) $(COMP_FLAG) $(GUROBI_COMP) -c $*.c

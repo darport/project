@@ -20,8 +20,6 @@ int push(Stack *stk, int val){
 int pop(Stack *stk){
     Elem *p;
     int val;
-
-
 	val = stk->top->val;
 	p = stk->top;
 	stk->top = stk->top->next;
@@ -31,7 +29,6 @@ int pop(Stack *stk){
 }
 
 int top(Stack *stk){
-
 	return stk->top->val;
 }
 

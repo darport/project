@@ -3,18 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "Game.h"
-
-int isEmpty(Game *game){
-	int i,j, len = game->size;
-	for(i=0 ; i <len; i++){
-		for(j = 0; j < len; j++){
-			if(game->board[i][j].value != 0){
-				return 0;
-			}
-		}
-	}
-	return 1;
-}
+#include "MainAux.h"
 
 int printInvalid(){
 	printf("ERROR: invalid command\n");
@@ -35,7 +24,7 @@ int isInt(char *num){
 
 int callSolve(Game *game){
 	char *fileName;
-	fileName = strtok(NULL," \t\r\n");
+	fileName = strtok(NULL," \t\r\n"); /* getting the filename for the solve command */
 	if(fileName == NULL){
 		return printInvalid();
 	}
@@ -53,15 +42,17 @@ int callMarkErrors(Game *game){
 	int digit;
 	mark = strtok(NULL, " \t\r\n");
 	if(mark == NULL){ /* no number was entered after "mark_errors" */
-		return printInvalid(); /* check the error */
+		return printInvalid();
 	}
-	digit = isInt(mark); /* returns -1 if digit is not an integer */
+	/* checking that the parameters are integers in the right range */
+	digit = isInt(mark);
 	if(digit == 0 || digit == 1){
 		return markErrors(game, digit);
 	}
 	printf("Error: the value should be 0 or 1\n");
 	return 0;
 }
+
 int inRange(Game *game, int num){
 	if(num < 1 || num >(game->rowsInBlock * game->colsInBlock)){
 		return 0;
@@ -86,8 +77,9 @@ int callSet (Game *game){
 	   params[i] = strtok(NULL, " \t\r\n");
 	   i++;
 	 }
-	check = checkParams(params, 3);
+	check = checkParams(params, 3); /* checking that there are at least 3 parameters */
 	if(check == 1){
+		/* checking that the parameters are integers in the right range */
 		x = isInt(params[0]);
 		y = isInt(params[1]);
 		z = isInt(params[2]);
@@ -100,30 +92,32 @@ int callSet (Game *game){
 	}
 	return printInvalid();
 }
+
 int inRangeGen(Game *game, int num){
 	if(num < 0 || num >(game->size*game->size)){
 		return 0;
 	}
 	return 1;
 }
+
 int callGenerate (Game *game){
 	int i = 0, x, y, check;
 	char *params[2];
-	while (i<2){ /* getting the parameters for set command */
+	while (i<2){ /* getting the parameters for generate command */
 	   params[i] = strtok(NULL, " \t\r\n");
 	   i++;
 	}
-	check = checkParams(params,2);
+	check = checkParams(params,2); /* checking that there are at least 2 parameters */
 	if(check == 1){
+		/* checking that the parameters are integers in the right range */
 		x = isInt(params[0]);
 		y = isInt(params[1]);
-		if(inRangeGen(game,x)  && inRangeGen(game, y)){
-			if(isEmpty(game)){
+		if(inRangeGen(game,x)  && inRangeGen(game, y)) {
+			if(isEmpty(game)) {
 				return generate(game,x,y);
 			}
 			printf("Error: board is not empty\n");
 			return 0;
-			/*return generate(game, x, y);*/
 		}
 		printf("Error: value not in range 0-%d\n", game->size*game->size);
 		return 0;
@@ -133,8 +127,8 @@ int callGenerate (Game *game){
 
 int callSave(Game *game){
 	char *fileName;
-	fileName = strtok(NULL, " \t\r\n");
-	if(fileName == NULL){
+	fileName = strtok(NULL, " \t\r\n"); /* getting the filename for the save command */
+	if(fileName == NULL) {
 		return printInvalid();
 	}
 	return save(game, fileName);
@@ -143,12 +137,13 @@ int callSave(Game *game){
 int callHint(Game *game){
 	int i = 0, check, x, y;
 	char *params[2];
-	while (i<2){ /* getting the parameters for set command */
+	while (i<2){ /* getting the parameters for hint command */
 	   params[i] = strtok(NULL, " \t\r\n");
 	   i++;
 	 }
-	check = checkParams(params, 2);
-	if(check == 1){
+	check = checkParams(params, 2); /* checking thar there are at least 2 parameters */
+	if(check == 1) {
+		/* checking that the parameters are integers in the right range */
 		x = isInt(params[0]);
 		y = isInt(params[1]);
 		if(inRange(game, x) && inRange(game, y)){
@@ -168,10 +163,12 @@ int getCommand(Game *game){
 	for(i = 0; i<257; i++){
 		cmd[i] = '0';
 	}
+	/* checking EOF */
 	if(fgets(cmd,258,stdin) == 0){
-		return exitGame(game);
+		return exitGame();
 	}
 	charRead = (int)strlen(cmd) ;
+	/*checking the command length is not longer than 256 characters */
 	if( charRead > 256){
 		x = (char)getchar();
 		while(x != '\n' && x != EOF){
@@ -191,7 +188,7 @@ int getCommand(Game *game){
 		return callEdit(game);
 	}
 	if(strcmp(commandType,"exit") == 0){
-		return exitGame(game);
+		return exitGame();
 	}
 	/* available in solve and edit mode */
 	if(game->mode == 1 || game->mode == 2){

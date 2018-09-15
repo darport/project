@@ -4,6 +4,18 @@
 #include "LinkedList.h"
 #include "ErrorHandler.h"
 
+int isEmpty(Game *game){
+	int i,j, len = game->size;
+	for(i=0 ; i <len; i++){
+		for(j = 0; j < len; j++){
+			if(game->board[i][j].value != 0){
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
 void freeBoard(Cell **temp,int size){
 	int i;
 	for(i = 0; i < size; i++){

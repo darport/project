@@ -237,7 +237,6 @@ int edit(Game *game, char *x){
 	int success;
 	Cell **temp;
     /*free prev boards if needed*/
-
 	if(x == NULL){
         if(game->board != NULL){
             temp = game->board;
@@ -278,19 +277,13 @@ void printSep(int sepLen){
     }
 }
 
-
-
 int validate(Game *game){
     int valid;
     if(isErroneous(game)){
         printf("Error: board contains erroneous values\n");
         return 0;
     }
-    valid = 0;
-
-    valid = ILP(game,0);
-   /* valid = detBacktracking(game);
-    valid = validateChange(game);*/
+    valid = ILP(game, 0);
     if(valid){
         printf("Validation passed: board is solvable\n");
     }
@@ -301,7 +294,7 @@ int validate(Game *game){
     return 1;
 }
 
-int set(Game *game, int x, int y, int z,int show,int type){
+int set(Game *game, int x, int y, int z, int show, int type){
     int mark;
     /* checking if the cell is fixed */
     if(game->board[x][y].fixed && game->mode != 2){
@@ -314,13 +307,11 @@ int set(Game *game, int x, int y, int z,int show,int type){
     	}
     	return 1;
     }
-
     /* clearing any move beyond the current move from the undo-redo list */
    	if(game->ops->next != NULL) {
    		freeList(game->ops->next);
         game->ops->next = NULL;
     }
-
    	/*adding a new link for set operation or a new node for autofill operation*/
    	if(type == 0){
    		addLink(&game->ops, x, y, z, game->board[x][y].value,type);
@@ -328,7 +319,6 @@ int set(Game *game, int x, int y, int z,int show,int type){
    	else{
    		addNode(&game->ops->head, x, y, z, game->board[x][y].value,type);
    	}
-
 
     /* if the value z is erroneous, mark will be 1 and all the non fixed cells that b
      * become erroneous because of z will be marked by isValid */

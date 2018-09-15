@@ -16,4 +16,6 @@ int options(Game *game ,int i, int j);
 void markChanges(Game *game);
 int setChanges(Game *game);
 void initCell(Game *game, int i, int j);
+int isEmpty(Game *game);
+
 #endif /* MAINAUX_H_ */
