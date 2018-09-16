@@ -2,30 +2,56 @@
 #include <stdio.h>
 #include "Game.h"
 #include "LinkedList.h"
+#include "ErrorHandler.h"
 
-
-void boardCopy(Game *game){
-	int i,j;
-	for(i = 0;i <game->size; i++){
-		for(j = 0; j<game->size; j++){
-			game->solved[i][j].value = game->board[i][j].value;
+int isEmpty(Game *game){
+	int i,j, len = game->size;
+	for(i=0 ; i <len; i++){
+		for(j = 0; j < len; j++){
+			if(game->board[i][j].value != 0){
+				return 0;
+			}
 		}
 	}
+	return 1;
 }
+
+void freeBoard(Cell **temp,int size){
+	int i;
+	for(i = 0; i < size; i++){
+		free(temp[i]);
+	}
+	free(temp);
+}
+
+void initCell(Game *game, int i, int j){
+	game->board[i][j].value = 0;
+	game->board[i][j].fixed = 0;
+	game->board[i][j].marked = 0;
+	game->board[i][j].needChange = 0;
+	game->board[i][j].valChange = 0;
+	game->solved[i][j].value = 0;
+	game->solved[i][j].fixed = 0;
+	game->solved[i][j].marked = 0;
+	game->solved[i][j].needChange = 0;
+	game->solved[i][j].valChange = 0;
+}
+
+void initNode(Node *head){
+    head->x = 0;
+    head->y = 0;
+    head->currZ = 0;
+    head->prevZ = 0;
+    head->next = NULL;
+    head->prev = NULL;
+}
+
 
 void initializeOps(Game *game){
 	game->ops->next = NULL;
 	game->ops->prev = NULL;
-	game->ops->head->x = 0;
-	game->ops->head->y = 0;
-	game->ops->head->currZ = 0;
-	game->ops->head->prevZ = 0;
-	game->ops->head->type = 0;
-	game->ops->head->next = NULL;
-	game->ops->head->prev = NULL;
+	initNode(game->ops->head);
 }
-
-
 
 void cleanBoard(Game * game){
 	int i, j;
@@ -39,42 +65,23 @@ void cleanBoard(Game * game){
 }
 
 void freeGame(Game *game){
-	int i;
 	if(game->board != NULL){
-		for(i = 0; i < game->size; i++){
-			free(game->board[i]);
-		}
-		free(game->board);
-		game->board = NULL;
+		freeBoard(game->board,game->size);
 	}
 	if(game->solved != NULL){
-		for(i = 0; i < game->size; i++){
-			free(game->solved[i]);
-		}
-		free(game->solved);
-		game->solved = NULL;
+		freeBoard(game->solved,game->size);
 	}
 
 	if(game->ops != NULL){
+        while(game->ops->prev != NULL){
+        	game->ops = game->ops->prev;
+        }
 		freeList(game->ops);
 		game->ops = NULL;
 	}
-	/*free(game); for unknown reason this line terminates the program */
-}
-
-int memoryError(){
-	printf("memory allocation error\n");
-	return 0;
-}
-
-int fileError(){
-	printf("closing file error\n");
-	return 0;
-}
-
-int erroneous(){
-	printf("Error: board contains erroneous values\n");
-	return 0;
+	if(game != NULL){
+	    free(game);
+	}
 }
 
 int isErroneous(Game *game){
@@ -199,10 +206,13 @@ void markChanges(Game *game){
 	}
 }
 
-void setChanges(Game *game){
+int setChanges(Game *game){
 	int i,j, flag = 0;
 	Link *temp;
 	Link *new = (Link*)malloc(sizeof(Link));
+	if(new == NULL){
+		return memoryError();
+	}
 	new->head = NULL;
 	new->next = NULL;
 	new->prev = game->ops;
@@ -224,9 +234,5 @@ void setChanges(Game *game){
 		game->ops->next = NULL;
 		free(temp);
 	}
+	return 1;
 }
-
-
-
-
-

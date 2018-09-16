@@ -314,10 +314,10 @@ int set(Game *game, int x, int y, int z, int show, int type){
     }
    	/*adding a new link for set operation or a new node for autofill operation*/
    	if(type == 0){
-   		addLink(&game->ops, x, y, z, game->board[x][y].value,type);
+   		addLink(&game->ops, x, y, z, game->board[x][y].value);
    	}
    	else{
-   		addNode(&game->ops->head, x, y, z, game->board[x][y].value,type);
+   		addNode(&game->ops->head, x, y, z, game->board[x][y].value);
    	}
 
     /* if the value z is erroneous, mark will be 1 and all the non fixed cells that b
@@ -704,4 +704,3 @@ int exitGame(){
     printf("Exiting...\n");
     return -1;
 }
-

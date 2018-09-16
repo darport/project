@@ -24,7 +24,7 @@ void freeList(Link *head){
 	free(head);
 }
 
-int addNode(Node **head, int x, int y, int currZ, int prevZ, int type){
+int addNode(Node **head, int x, int y, int currZ, int prevZ){
     Node *newNode = (Node *) malloc(sizeof(Node));
     if(newNode == NULL){
         return memoryError();
@@ -33,7 +33,6 @@ int addNode(Node **head, int x, int y, int currZ, int prevZ, int type){
     newNode->y = y;
     newNode->currZ = currZ;
     newNode->prevZ = prevZ;
-    newNode->type = type;
     newNode->next = NULL;
     newNode->prev = NULL;
     if(*head == NULL){
@@ -47,7 +46,7 @@ int addNode(Node **head, int x, int y, int currZ, int prevZ, int type){
 }
 
 
-int addLink(Link **ops, int x, int y, int currZ, int prevZ, int type){
+int addLink(Link **ops, int x, int y, int currZ, int prevZ){
 	Link *newLink = (Link *)malloc(sizeof(Link));
 
 	if(newLink == NULL){
@@ -56,7 +55,7 @@ int addLink(Link **ops, int x, int y, int currZ, int prevZ, int type){
 	newLink->head = NULL;
 	newLink->next = NULL;
     newLink->prev = NULL;
-    if(addNode(&(newLink->head), x, y, currZ,prevZ,type) == -1){
+    if(addNode(&(newLink->head), x, y, currZ,prevZ) == -1){
         return -1;
     }
     if(*ops == NULL){
@@ -68,6 +67,4 @@ int addLink(Link **ops, int x, int y, int currZ, int prevZ, int type){
     *ops = newLink;
     return 1;
 }
-
-
 

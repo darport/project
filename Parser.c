@@ -174,6 +174,10 @@ int getCommand(Game *game){
 		while(x != '\n' && x != EOF){
 			x = (char)getchar();
 		}
+		if(x == EOF){
+			printInvalid();
+			return -1;
+		}
 		return printInvalid();
 	}
 	commandType = strtok(cmd," \t\r\n");
